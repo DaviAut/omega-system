@@ -1,0 +1,68 @@
+╔══════════════════════════════════════════════════════════════════╗
+║       SISTEMA ÔMEGA — GUIA DE DEPLOY ONLINE                     ║
+╚══════════════════════════════════════════════════════════════════╝
+
+O sistema é um único arquivo HTML. Existem 3 formas gratuitas e
+simples de hospedar online para que todos acessem via link:
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  OPÇÃO 1 — NETLIFY DROP (MAIS FÁCIL — 2 MINUTOS)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Acesse: https://app.netlify.com/drop
+  2. Arraste a pasta OMEGA_SYSTEM para a área indicada
+     (ou apenas o arquivo omega_system.html)
+  3. Pronto! Você receberá um link tipo:
+        https://meu-site-aleatorio.netlify.app
+
+  PARA URL PERSONALIZADA:
+  - Crie uma conta gratuita em netlify.com
+  - Acesse Site Settings > Domain Management
+  - Mude para algo como:  omega-raider.netlify.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  OPÇÃO 2 — GITHUB PAGES (RECOMENDADO PARA ATUALIZAÇÕES)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Crie conta em github.com (gratuito)
+  2. Crie um novo repositório com nome: omega-system
+  3. Faça upload dos arquivos (clique em "Add file > Upload files")
+      - omega_system.html  →  renomeie para  index.html
+      - pasta assets/       →  suba junto
+  4. Vá em Settings > Pages > Branch: main > Save
+  5. URL será:  https://SEU-USUARIO.github.io/omega-system
+
+  VANTAGEM: Para atualizar, basta substituir o index.html no GitHub.
+  Todos que acessarem o link verão a versão mais recente.
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  OPÇÃO 3 — VERCEL (RÁPIDO E PROFISSIONAL)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  1. Acesse: https://vercel.com
+  2. Crie conta (pode usar sua conta GitHub)
+  3. Clique "Add New Project > Deploy without Git"
+  4. Arraste a pasta OMEGA_SYSTEM
+  5. URL automática tipo: omega-system.vercel.app
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  IMPORTANTE: SOBRE IMAGENS (PASTA ASSETS/)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Para que as imagens do logo e login apareçam:
+  - Coloque os PNGs na pasta assets/ ANTES de fazer o upload
+  - O sistema funciona sem elas (com fallback em CSS)
+
+  Arquivos esperados em assets/:
+    projectOmegaLogo.png
+    loginBorder.png
+    loginID.png
+    loginCode.png
+    credentialsText.png
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  RECOMENDAÇÃO PARA O SEU CASO (RPG)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+  Use o GITHUB PAGES. É gratuito, permanente, e quando quiser
+  atualizar o sistema (adicionar novas funcionalidades) basta
+  substituir o index.html no repositório.
+
+  Link compartilhável para os jogadores:
+    https://SEU-USUARIO.github.io/omega-system
+══════════════════════════════════════════════════════════════════
