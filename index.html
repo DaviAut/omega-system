@@ -430,9 +430,69 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
 .full-log-entry{display:flex;align-items:flex-start;gap:12px;padding:6px 10px;
   border:1px solid rgba(100,0,0,.12);font-size:11px;color:rgba(190,90,90,.75);}
 .full-log-entry:hover{background:rgba(20,0,0,.5);}
+
+
+/* ═══ CHAT ═══ */
+.chat-layout{display:flex;height:100%;gap:0;}
+.chat-rooms{width:200px;min-width:200px;border-right:1px solid var(--border);
+  display:flex;flex-direction:column;background:var(--panel);}
+.chat-rooms-title{font-size:9px;letter-spacing:3px;color:var(--txt-dim);
+  padding:10px 12px 6px;border-bottom:1px solid var(--border);}
+.chat-room-item{padding:9px 12px;cursor:pointer;border-left:2px solid transparent;
+  transition:all .12s;font-size:11px;letter-spacing:1px;color:var(--nav-txt);}
+.chat-room-item:hover{background:var(--nav-hover);color:var(--ac-b);border-left-color:var(--ac);}
+.chat-room-item.active{background:var(--nav-active);color:var(--ac-b);border-left-color:var(--ac);}
+.chat-room-name{font-size:11px;letter-spacing:1px;}
+.chat-room-sub{font-size:9px;letter-spacing:1px;color:var(--txt-dim);margin-top:2px;}
+.chat-unread{display:inline-block;background:var(--ac);color:#000;font-size:8px;
+  padding:1px 5px;margin-left:6px;font-family:'Orbitron',sans-serif;}
+.chat-main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.chat-header{padding:10px 16px;border-bottom:1px solid var(--border);
+  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--ac);
+  display:flex;align-items:center;justify-content:space-between;}
+.chat-messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+.chat-messages::-webkit-scrollbar{width:3px;}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--ac-d);}
+.chat-msg{display:flex;flex-direction:column;gap:2px;max-width:75%;}
+.chat-msg.own{align-self:flex-end;}
+.chat-msg.other{align-self:flex-start;}
+.chat-msg-meta{font-size:9px;letter-spacing:1px;color:var(--txt-dim);
+  display:flex;gap:8px;align-items:center;}
+.chat-msg.own .chat-msg-meta{justify-content:flex-end;}
+.chat-msg-bubble{padding:7px 12px;font-size:12px;letter-spacing:.5px;line-height:1.5;
+  border:1px solid;word-break:break-word;}
+.chat-msg.own .chat-msg-bubble{background:var(--ac-f);border-color:var(--ac-d);
+  color:var(--txt-b);border-radius:8px 0 8px 8px;}
+.chat-msg.other .chat-msg-bubble{background:var(--panel);border-color:var(--border);
+  color:var(--txt);border-radius:0 8px 8px 8px;}
+.chat-msg-del{background:none;border:none;color:var(--txt-dim);cursor:pointer;
+  font-size:11px;padding:0 3px;opacity:0;transition:opacity .1s;}
+.chat-msg:hover .chat-msg-del{opacity:1;}
+.chat-msg-del:hover{color:#ff4444;}
+.chat-input-row{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);}
+.chat-input{flex:1;background:var(--input-bg);border:1px solid var(--input-border);
+  color:var(--txt-b);font-family:'Share Tech Mono',monospace;font-size:12px;
+  letter-spacing:1px;padding:8px 12px;outline:none;resize:none;min-height:36px;max-height:90px;}
+.chat-input:focus{border-color:var(--ac);}
+.chat-send{background:transparent;border:1px solid var(--ac);color:var(--ac-b);
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;
+  padding:7px 16px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+.chat-send:hover{background:var(--ac);color:#000;}
+.chat-send:disabled{opacity:.35;cursor:not-allowed;}
+.chat-locked{display:flex;align-items:center;justify-content:center;
+  padding:14px;font-size:11px;letter-spacing:2px;color:var(--txt-dim);
+  border:1px dashed var(--border);margin:10px 14px;}
+.chat-date-sep{text-align:center;font-size:9px;letter-spacing:3px;
+  color:var(--txt-dim);padding:6px 0;position:relative;}
+.chat-date-sep::before,.chat-date-sep::after{content:'';position:absolute;
+  top:50%;width:40%;height:1px;background:var(--border);}
+.chat-date-sep::before{left:0;} .chat-date-sep::after{right:0;}
+.chat-sys-msg{text-align:center;font-size:10px;letter-spacing:1px;
+  color:var(--txt-dim);font-style:italic;padding:3px 0;}
 </style>
 </head>
 <body>
+
 
 <div id="scanlines"></div>
 <div class="grid-bg"></div>
@@ -547,27 +607,140 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
   </div>
 </div>
 
-<script>
-// ═══════════════════════════════════════════════════
-//  DATABASE
-// ═══════════════════════════════════════════════════
-const RARITIES = ['common','uncommon','rare','unique','omega'];
-const RARITY_LABELS = {common:'Common',uncommon:'Uncommon',rare:'Rare',unique:'Unique',omega:'Ômega'};
-const ITEM_CATS = ['headgear','weapon','upper-gear','lower-gear','boots','accessory','item'];
-const ITEM_ICONS = {headgear:'🪖',weapon:'⚔',  'upper-gear':'🧥','lower-gear':'👖',
-  boots:'👟',accessory:'💍',item:'📦'};
+<script type="module">
 
-const SLOT_DEFS = [
-  {id:'headgear',   label:'HEADGEAR',   cats:['headgear'],             icon:'🪖'},
-  {id:'left-hand',  label:'LEFT-HAND',  cats:['weapon'],               icon:'🗡'},
-  {id:'right-hand', label:'RIGHT-HAND', cats:['weapon'],               icon:'⚔'},
-  {id:'upper-gear', label:'UPPER-GEAR', cats:['upper-gear'],           icon:'🧥'},
-  {id:'lower-gear', label:'LOWER-GEAR', cats:['lower-gear'],           icon:'👖'},
-  {id:'boots',      label:'BOOTS',      cats:['boots'],                icon:'👟'},
-  {id:'accessory1', label:'ACCESSORY 1',cats:['accessory'],            icon:'💍'},
-  {id:'accessory2', label:'ACCESSORY 2',cats:['accessory'],            icon:'💎'},
+// ═══════════════════════════════════════════════════════════════
+//  FIREBASE INIT
+// ═══════════════════════════════════════════════════════════════
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import {
+  getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc,
+  updateDoc, deleteDoc, onSnapshot, query, orderBy, limit,
+  where, serverTimestamp, Timestamp
+} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyAys_MB-KjPidHvPle5du50J5EsKsKFUUs",
+  authDomain: "omega-project-c8cdb.firebaseapp.com",
+  projectId: "omega-project-c8cdb",
+  storageBucket: "omega-project-c8cdb.firebasestorage.app",
+  messagingSenderId: "654706590337",
+  appId: "1:654706590337:web:bb459238f7808239550380",
+  measurementId: "G-790H0E77FJ"
+};
+const app = initializeApp(firebaseConfig);
+const db  = getFirestore(app);
+
+// ── Firestore helpers ──
+const COL = {
+  users:   ()=> collection(db,'users'),
+  entries: (sec)=> collection(db,'entries',sec,'docs'),
+  sheets:  (uid)=> doc(db,'sheets',uid),
+  logs:    (day)=> collection(db,'logs',day,'events'),
+  chat:    (room)=> collection(db,'chat',room,'messages'),
+};
+async function fbGet(ref){const s=await getDoc(ref);return s.exists()?{id:s.id,...s.data()}:null;}
+async function fbSet(ref,data){await setDoc(ref,data,{merge:true});}
+async function fbAdd(colRef,data){return await addDoc(colRef,data);}
+async function fbDel(ref){await deleteDoc(ref);}
+async function fbList(colRef,...constraints){
+  const q=query(colRef,...constraints);
+  const snap=await getDocs(q);
+  return snap.docs.map(d=>({id:d.id,...d.data()}));
+}
+
+// ── Seed users on first run ──
+async function seedIfEmpty(){
+  const snap=await getDocs(COL.users());
+  if(!snap.empty)return;
+  const seed=[
+    {id:'ADMIN',    code:'omega@dm1n!', name:'Administrador ÔMEGA',  level:99, role:'ADMINISTRADOR DO SISTEMA',  team:'SCARLET', isAdmin:true},
+    {id:'RAIDER-01',code:'omega2077',   name:'Comandante SILVA',      level:5,  role:'COMANDANTE SUPREMO',        team:'SCARLET'},
+    {id:'ALPHA-07', code:'alpha007',    name:'Agente CROSS',          level:4,  role:'AGENTE SÊNIOR',             team:'SCARLET'},
+    {id:'BETA-12',  code:'beta1234',    name:'Operador RAMOS',        level:3,  role:'OPERADOR DE CAMPO',         team:'SCARLET'},
+    {id:'GAMA-03',  code:'gama999',     name:'Analista TORRES',       level:2,  role:'ANALISTA',                  team:'SCARLET'},
+    {id:'DELTA-99', code:'delta01',     name:'Recruta LIMA',          level:1,  role:'RECRUTA',                   team:'SCARLET'},
+    {id:'IVORY-01', code:'ivory2077',   name:'Agente WHITMORE',       level:3,  role:'OPERADOR DE CAMPO',         team:'IVORY'},
+  ];
+  for(const u of seed){
+    await setDoc(doc(db,'users',u.id),u);
+    if(!u.isAdmin) await fbSet(COL.sheets(u.id), mkSheet(u.id));
+  }
+  // seed entries
+  const seedEntries = {
+    arquivos:[
+      {id:'A001',title:'PROTOCOLO DE COMUNICAÇÃO INTERNA',level:1,author:'SYSTEM',date:'2077-03-01',tags:['protocolo'],content:'Diretrizes para comunicação interna entre agentes. Uso obrigatório de canais criptografados em operações de campo.'},
+      {id:'A002',title:'MANUAL DE CONDUTA DO AGENTE',level:1,author:'SYSTEM',date:'2077-02-15',tags:['manual'],content:'Código de conduta e ética operacional. Todo agente deve ler e assinar este documento antes de iniciar missões.'},
+    ],
+    relatorios:[
+      {id:'R001',title:'OP-CORVUS — CAPÍTULO 1',level:2,author:'SYSTEM',date:'2077-03-10',tags:['capitulo','finalizado'],content:'Resumo dos eventos da sessão: incursão ao complexo Nordvik. Equipe confirmou presença de três alvos. Missão concluída sem baixas.'},
+    ],
+    intel:[
+      {id:'I001',title:'ORGANIZAÇÃO: SERPENTE VERMELHA',level:3,author:'SYSTEM',date:'2077-01-20',tags:['organização','ativa'],content:'Grupo paramilitar transnacional. Opera em 7 países. Estimativa de 2.000 membros ativos. Estrutura hierárquica desconhecida.'},
+    ],
+    dossies:[
+      {id:'D001',title:'INIMIGO: VICTOR CRANE',level:3,author:'SYSTEM',date:'2077-01-05',tags:['ativo','alvo-primário'],content:'Comerciante de armas e intermediário da Serpente Vermelha. Localização atual: Europa Oriental. Nível de ameaça: EXTREMO.'},
+    ],
+    opsNegras:[
+      {id:'ON001',title:'MISSÃO: OPERAÇÃO ECLIPSE',level:4,author:'SYSTEM',date:'2077-03-05',tags:['ativa','prioridade-1'],content:'Objetivo: neutralizar célula terrorista no complexo Nordvik. 5 membros confirmados. Janela de execução: 72h. Requer silêncio total.'},
+    ],
+  };
+  for(const [sec,arr] of Object.entries(seedEntries)){
+    for(const e of arr) await setDoc(doc(db,'entries',sec,'docs',e.id),e);
+  }
+  console.log('[OMEGA] Seed completo.');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CONSTANTS
+// ═══════════════════════════════════════════════════════════════
+const RARITIES     = ['common','uncommon','rare','unique','omega'];
+const RARITY_LABELS= {common:'Common',uncommon:'Uncommon',rare:'Rare',unique:'Unique',omega:'Ômega'};
+const ITEM_CATS    = ['headgear','weapon','upper-gear','lower-gear','boots','accessory','item'];
+const ITEM_ICONS   = {headgear:'🪖',weapon:'⚔','upper-gear':'🧥','lower-gear':'👖',boots:'👟',accessory:'💍',item:'📦'};
+const SLOT_DEFS    = [
+  {id:'headgear',   label:'HEADGEAR',    cats:['headgear'],  icon:'🪖'},
+  {id:'left-hand',  label:'LEFT-HAND',   cats:['weapon'],    icon:'🗡'},
+  {id:'right-hand', label:'RIGHT-HAND',  cats:['weapon'],    icon:'⚔'},
+  {id:'upper-gear', label:'UPPER-GEAR',  cats:['upper-gear'],icon:'🧥'},
+  {id:'lower-gear', label:'LOWER-GEAR',  cats:['lower-gear'],icon:'👖'},
+  {id:'boots',      label:'BOOTS',       cats:['boots'],     icon:'👟'},
+  {id:'accessory1', label:'ACCESSORY 1', cats:['accessory'], icon:'💍'},
+  {id:'accessory2', label:'ACCESSORY 2', cats:['accessory'], icon:'💎'},
 ];
+const LEVEL_LABELS = {1:'ACESSO I',2:'ACESSO II',3:'ACESSO III',4:'ACESSO IV',5:'ACESSO V',99:'ADMINISTRADOR'};
+const LEVEL_CLASSES= {1:'lvl-1',2:'lvl-2',3:'lvl-3',4:'lvl-4',5:'lvl-5',99:'lvl-5'};
+const TEAM_THEMES  = {SCARLET:'',IVORY:'theme-ivory'};
 
+// Who can create in which section
+// level 3 → relatorios, level 4 → +dossies, level 5 → +intel; admin always all
+const CREATE_PERMS = {
+  relatorios: 3,
+  dossies:    4,
+  intel:      5,
+};
+
+const NAV_DEFS=[
+  {label:'FICHA DO AGENTE',icon:'◈',section:'agente',    minLevel:1, desc:'Sua ficha de personagem'},
+  {label:'DASHBOARD',      icon:'◫',section:'dashboard', minLevel:1, desc:'Visão geral do sistema'},
+  {label:'CHAT',           icon:'◌',section:'chat',      minLevel:1, desc:'Comunicação entre agentes'},
+  {label:'ARQUIVOS',       icon:'◉',section:'arquivos',  minLevel:1, desc:'Documentos de apoio e referência'},
+  {label:'RELATÓRIOS',     icon:'◎',section:'relatorios',minLevel:2, desc:'Eventos e capítulos da campanha'},
+  {label:'INTELIGÊNCIA',   icon:'◧',section:'intel',     minLevel:3, desc:'Fichas de organizações'},
+  {label:'DOSSIÊS',        icon:'✦',section:'dossies',   minLevel:3, desc:'Fichas de inimigos e alvos'},
+  {label:'DARK OPS.',      icon:'⊠',section:'opsNegras', minLevel:4, desc:'Missões e operações ativas'},
+  {label:'CONTROLE',       icon:'⊞',section:'controle',  minLevel:5, desc:'Monitoramento central'},
+  {label:'PAINEL ADMIN',   icon:'★',section:'adminPanel',minLevel:99,desc:'Administração do sistema'},
+];
+const SECTION_LABELS={
+  agente:'FICHA DO AGENTE',dashboard:'DASHBOARD',chat:'CHAT — COMUNICAÇÕES',
+  arquivos:'ARQUIVOS',relatorios:'RELATÓRIOS DE CAMPANHA',
+  intel:'INTELIGÊNCIA — ORGANIZAÇÕES',dossies:'DOSSIÊS — INIMIGOS',
+  opsNegras:'DARK OPS. — MISSÕES',controle:'CONTROLE CENTRAL',adminPanel:'PAINEL ADMINISTRATIVO'
+};
+const SECTION_MIN={agente:1,dashboard:1,chat:1,arquivos:1,relatorios:2,intel:3,dossies:3,opsNegras:4,controle:5,adminPanel:99};
+
+// ── Sheet template ──
 function mkSheet(uid){
   return {
     info:{name:'',affiliation:'',age:'',height:'',id:uid,class:'',rank:''},
@@ -580,13 +753,9 @@ function mkSheet(uid){
       charisma:{base:1,bonus:0},willpower:{base:1,bonus:0}},
     level:{current:0,exp:0,expMax:100},
     skills:[
-      {name:'',desc:'',active:true},
-      {name:'',desc:'',active:true},
-      {name:'',desc:'',active:true},
-      {name:'',desc:'',active:false},
-      {name:'',desc:'',active:false},
-      {name:'',desc:'',active:false},
-      {name:'',desc:'',active:false},
+      {name:'',desc:'',active:true},{name:'',desc:'',active:true},{name:'',desc:'',active:true},
+      {name:'',desc:'',active:false},{name:'',desc:'',active:false},
+      {name:'',desc:'',active:false},{name:'',desc:'',active:false},
     ],
     equipment:{headgear:null,'left-hand':null,'right-hand':null,
       'upper-gear':null,'lower-gear':null,boots:null,accessory1:null,accessory2:null},
@@ -594,147 +763,137 @@ function mkSheet(uid){
   };
 }
 
-let DB = {
-  users:[
-    {id:'ADMIN',    code:'omega@dm1n!', name:'Administrador ÔMEGA',  level:99, role:'ADMINISTRADOR DO SISTEMA',  team:'SCARLET', isAdmin:true},
-    {id:'RAIDER-01',code:'omega2077',   name:'Comandante SILVA',      level:5,  role:'COMANDANTE SUPREMO',        team:'SCARLET'},
-    {id:'ALPHA-07', code:'alpha007',    name:'Agente CROSS',          level:4,  role:'AGENTE SÊNIOR',             team:'SCARLET'},
-    {id:'BETA-12',  code:'beta1234',    name:'Operador RAMOS',        level:3,  role:'OPERADOR DE CAMPO',         team:'SCARLET'},
-    {id:'GAMA-03',  code:'gama999',     name:'Analista TORRES',       level:2,  role:'ANALISTA',                  team:'SCARLET'},
-    {id:'DELTA-99', code:'delta01',     name:'Recruta LIMA',          level:1,  role:'RECRUTA',                   team:'SCARLET'},
-    {id:'IVORY-01', code:'ivory2077',   name:'Agente WHITMORE',       level:3,  role:'OPERADOR DE CAMPO',         team:'IVORY'},
-  ],
-  sheets:{},
-  entries:{
-    arquivos:[
-      {id:'A001',title:'PROTOCOLO DE COMUNICAÇÃO INTERNA',level:1,author:'ADMIN',date:'2077-03-01',tags:['protocolo'],content:'Diretrizes para comunicação interna entre agentes. Uso obrigatório de canais criptografados em operações de campo.'},
-      {id:'A002',title:'MANUAL DE CONDUTA DO AGENTE',level:1,author:'RAIDER-01',date:'2077-02-15',tags:['manual'],content:'Código de conduta e ética operacional. Todo agente deve ler e assinar este documento antes de iniciar missões.'},
-    ],
-    relatorios:[
-      {id:'R001',title:'OP-CORVUS — CAPÍTULO 1',level:2,author:'ALPHA-07',date:'2077-03-10',tags:['capitulo','finalizado'],content:'Resumo dos eventos da sessão: incursão ao complexo Nordvik. Equipe confirmou presença de três alvos. Missão concluída sem baixas.'},
-      {id:'R002',title:'EVENTO: CONTATO NO PORTO SUL',level:2,author:'BETA-12',date:'2077-03-12',tags:['evento','ativo'],content:'Encontro com o informante codeado PETREL. Informações sobre movimentação da Serpente Vermelha no setor portuário.'},
-    ],
-    intel:[
-      {id:'I001',title:'ORGANIZAÇÃO: SERPENTE VERMELHA',level:3,author:'ALPHA-07',date:'2077-01-20',tags:['organização','ativa'],content:'Grupo paramilitar transnacional. Opera em 7 países. Estimativa de 2.000 membros ativos. Estrutura hierárquica desconhecida.'},
-    ],
-    dossies:[
-      {id:'D001',title:'INIMIGO: VICTOR CRANE',level:3,author:'RAIDER-01',date:'2077-01-05',tags:['ativo','alvo-primário'],content:'Comerciante de armas e intermediário da Serpente Vermelha. Localização atual: Europa Oriental. Nível de ameaça: EXTREMO.'},
-    ],
-    opsNegras:[
-      {id:'ON001',title:'MISSÃO: OPERAÇÃO ECLIPSE',level:4,author:'RAIDER-01',date:'2077-03-05',tags:['ativa','prioridade-1'],content:'Objetivo: neutralizar célula terrorista no complexo Nordvik. 5 membros confirmados. Janela de execução: 72h. Requer silêncio total.'},
-    ],
-    controle:[]
-  },
-  accessLog:[
-    {time:'2077-03-13 08:00',user:'SYSTEM',action:'Sistema inicializado',type:'ok'}
-  ]
-};
+// ── State ──
+let currentUser=null, loginTime=null, sessionInterval=null;
+let bootClockInterval=null, currentSection='agente';
+let _adminViewingUid=null;
+let _chatUnsub=null; // active Firestore listener for chat
+let _allUsers=[]; // cached user list
 
-// init sheets for all users
-DB.users.forEach(u=>{ if(!u.isAdmin) DB.sheets[u.id]=mkSheet(u.id); });
-
-const LEVEL_LABELS={1:'ACESSO I',2:'ACESSO II',3:'ACESSO III',4:'ACESSO IV',5:'ACESSO V',99:'ADMINISTRADOR'};
-const LEVEL_CLASSES={1:'lvl-1',2:'lvl-2',3:'lvl-3',4:'lvl-4',5:'lvl-5',99:'lvl-5'};
-const TEAM_THEMES={SCARLET:'',IVORY:'theme-ivory'};
-const NAV_DEFS=[
-  {label:'FICHA DO AGENTE', icon:'◈', section:'agente',     minLevel:1,  desc:'Sua ficha de personagem'},
-  {label:'DASHBOARD',       icon:'◫', section:'dashboard',  minLevel:1,  desc:'Visão geral do sistema'},
-  {label:'ARQUIVOS',        icon:'◉', section:'arquivos',   minLevel:1,  desc:'Documentos de apoio e referência'},
-  {label:'RELATÓRIOS',      icon:'◎', section:'relatorios', minLevel:2,  desc:'Eventos e capítulos da campanha'},
-  {label:'INTELIGÊNCIA',    icon:'◧', section:'intel',      minLevel:3,  desc:'Fichas de organizações'},
-  {label:'DOSSIÊS',         icon:'✦', section:'dossies',    minLevel:3,  desc:'Fichas de inimigos e alvos'},
-  {label:'DARK OPS.',       icon:'⊠', section:'opsNegras',  minLevel:4,  desc:'Missões e operações ativas'},
-  {label:'CONTROLE',        icon:'⊞', section:'controle',   minLevel:5,  desc:'Monitoramento central'},
-  {label:'PAINEL ADMIN',    icon:'★', section:'adminPanel', minLevel:99, desc:'Administração do sistema'},
-];
-const SECTION_LABELS={agente:'FICHA DO AGENTE',dashboard:'DASHBOARD',arquivos:'ARQUIVOS',
-  relatorios:'RELATÓRIOS DE CAMPANHA',intel:'INTELIGÊNCIA — ORGANIZAÇÕES',dossies:'DOSSIÊS — INIMIGOS',
-  opsNegras:'DARK OPS. — MISSÕES',controle:'CONTROLE CENTRAL',adminPanel:'PAINEL ADMINISTRATIVO'};
-const SECTION_MIN={agente:1,dashboard:1,arquivos:1,relatorios:2,intel:3,dossies:3,opsNegras:4,controle:5,adminPanel:99};
-
-// ── THEME ──
-function applyTheme(user){
-  const cls=TEAM_THEMES[user.team]||'';
-  document.body.className=cls;
-}
+// ═══════════════════════════════════════════════════════════════
+//  THEME
+// ═══════════════════════════════════════════════════════════════
+function applyTheme(user){document.body.className=TEAM_THEMES[user.team]||'';}
 function resetTheme(){document.body.className='';}
 
-let currentUser=null,loginTime=null,sessionInterval=null,bootClockInterval=null,currentSection='agente';
+// ═══════════════════════════════════════════════════════════════
+//  LOGGING (Firestore)
+// ═══════════════════════════════════════════════════════════════
+function todayKey(){return new Date().toISOString().slice(0,10);}
+async function addLog(userId,action,type='ok'){
+  const day=todayKey();
+  const entry={
+    ts: serverTimestamp(),
+    time: new Date().toLocaleString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'2-digit'}),
+    user: userId, action, type
+  };
+  try{ await fbAdd(COL.logs(day), entry); }catch(e){ console.warn('Log error',e); }
+}
+async function loadLogs(day){
+  try{
+    return await fbList(COL.logs(day), orderBy('ts','desc'), limit(200));
+  }catch(e){return [];}
+}
+async function getLogDays(){
+  // list sub-collection IDs under /logs — requires list on the parent
+  try{
+    const snap=await getDocs(collection(db,'logs'));
+    return snap.docs.map(d=>d.id).sort().reverse();
+  }catch(e){return [todayKey()];}
+}
 
-// ═══ LOGIN ═══
-function doLogin(){
-  const id=document.getElementById('inputID').value.trim().toUpperCase();
-  const code=document.getElementById('inputCode').value.trim();
-  const err=document.getElementById('err-msg');
-  const user=DB.users.find(u=>u.id===id&&u.code===code);
-  if(!user){
-    err.textContent='⚠  CREDENCIAIS INVÁLIDAS — ACESSO NEGADO';
-    addLog(id||'???','Tentativa de acesso negada','err');
-    document.getElementById('inputCode').value='';
-    setTimeout(()=>err.textContent='',3500);return;
+// ═══════════════════════════════════════════════════════════════
+//  LOGIN
+// ═══════════════════════════════════════════════════════════════
+async function doLogin(){
+  const id   = document.getElementById('inputID').value.trim().toUpperCase();
+  const code = document.getElementById('inputCode').value.trim();
+  const err  = document.getElementById('err-msg');
+
+  setLoginLoading(true);
+  try{
+    const userDoc = await fbGet(doc(db,'users',id));
+    if(!userDoc || userDoc.code !== code){
+      err.textContent='⚠  CREDENCIAIS INVÁLIDAS — ACESSO NEGADO';
+      await addLog(id||'???','Tentativa de acesso negada','err');
+      document.getElementById('inputCode').value='';
+      setTimeout(()=>err.textContent='',3500);
+      setLoginLoading(false); return;
+    }
+    currentUser = userDoc; loginTime = new Date();
+    applyTheme(currentUser);
+    await addLog(currentUser.id,'Login efetuado','ok');
+    showScreen('screen-boot'); startBoot();
+  }catch(e){
+    err.textContent='⚠  ERRO DE CONEXÃO — TENTE NOVAMENTE';
+    console.error(e); setTimeout(()=>err.textContent='',4000);
+    setLoginLoading(false);
   }
-  currentUser=user; loginTime=new Date();
-  applyTheme(user);
-  addLog(user.id,'Login efetuado','ok');
-  showScreen('screen-boot'); startBoot();
+}
+function setLoginLoading(on){
+  const btn=document.querySelector('.btn-access');
+  if(btn)btn.querySelector('span').textContent=on?'CONECTANDO...':'ACESSAR SISTEMA';
 }
 document.getElementById('inputCode').addEventListener('keydown',e=>{if(e.key==='Enter')doLogin();});
 document.getElementById('inputID').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('inputCode').focus();});
-function doLogout(){
-  if(currentUser)addLog(currentUser.id,'Sessão encerrada','ok');
+
+async function doLogout(){
+  if(currentUser) await addLog(currentUser.id,'Sessão encerrada','ok');
+  if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
   currentUser=null; clearInterval(sessionInterval); clearInterval(bootClockInterval);
-  document.getElementById('inputID').value=''; document.getElementById('inputCode').value='';
-  resetTheme();
-  showScreen('screen-login');
+  document.getElementById('inputID').value='';
+  document.getElementById('inputCode').value='';
+  resetTheme(); showScreen('screen-login');
 }
-function showScreen(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');}
-function addLog(user,action,type='ok'){
-  const t=new Date().toLocaleString('pt-BR',{hour:'2-digit',minute:'2-digit',second:'2-digit',day:'2-digit',month:'2-digit'});
-  DB.accessLog.unshift({time:t,user,action,type});
-  if(DB.accessLog.length>300)DB.accessLog.pop();
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
 }
 
-// ═══ BOOT ═══
+// ═══════════════════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════════════════
 const BOOT_SEQ=[
   {text:'ΩMEGA SYSTEM — RAIDER.CORP.U',cls:'bright',delay:0},
   {text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',cls:'dim',delay:80},
   {text:' ',delay:120},
   {text:'[ INIT ] Verificando kernel de segurança...',cls:'dim',delay:200},
   {text:'[ OK   ] Kernel v4.1.77-OMEGA carregado',cls:'green',delay:600},
-  {text:'[ INIT ] Montando sistema de arquivos criptografados...',cls:'dim',delay:800},
-  {text:'[ OK   ] /omega/vault   [AES-512] MONTADO',cls:'green',delay:1200},
-  {text:'[ OK   ] /omega/ops     [AES-512] MONTADO',cls:'green',delay:1350},
-  {text:'[ OK   ] /omega/intel   [AES-512] MONTADO',cls:'green',delay:1500},
-  {text:' ',delay:1650},
-  {text:'[ INIT ] Conectando à RAIDER.CORP.U...',cls:'dim',delay:1700},
-  {text:'[ OK   ] TLS 1.3 — Túnel ativo [NODE-07-BR]',cls:'green',delay:2100},
-  {text:' ',delay:2250},
-  {text:'[ INIT ] Carregando banco de dados...',cls:'dim',delay:2300},
-  {text:null,type:'db-count',delay:2700},
-  {text:'[ INIT ] Verificando credenciais...',cls:'dim',delay:2900},
-  {text:null,type:'user-verify',delay:3200},
-  {text:null,type:'access-level',delay:3500},
-  {text:' ',delay:3650},
-  {text:'[ INIT ] Carregando módulos autorizados...',cls:'dim',delay:3700},
-  {text:null,type:'module-load',delay:4000},
-  {text:' ',delay:4700},
-  {text:'[ INIT ] Carregando ficha do agente...',cls:'dim',delay:4800},
-  {text:null,type:'sheet-load',delay:5100},
-  {text:' ',delay:5350},
-  {text:'[ INIT ] Inicializando interface...',cls:'dim',delay:5400},
-  {text:null,type:'progress',delay:5600},
-  {text:' ',delay:6700},
-  {text:'[ OK   ] Sistema pronto. Bem-vindo, Agente.',cls:'bright',delay:6800},
-  {text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',cls:'dim',delay:6900},
-  {text:null,type:'launch',delay:7200},
+  {text:'[ INIT ] Conectando ao Firestore...',cls:'dim',delay:800},
+  {text:null,type:'db-connect',delay:1200},
+  {text:' ',delay:1400},
+  {text:'[ INIT ] Verificando credenciais...',cls:'dim',delay:1500},
+  {text:null,type:'user-verify',delay:1800},
+  {text:null,type:'access-level',delay:2000},
+  {text:' ',delay:2100},
+  {text:'[ INIT ] Carregando módulos autorizados...',cls:'dim',delay:2200},
+  {text:null,type:'module-load',delay:2500},
+  {text:' ',delay:3100},
+  {text:'[ INIT ] Carregando ficha do agente...',cls:'dim',delay:3200},
+  {text:null,type:'sheet-load',delay:3500},
+  {text:' ',delay:3700},
+  {text:'[ INIT ] Inicializando interface...',cls:'dim',delay:3800},
+  {text:null,type:'progress',delay:4000},
+  {text:' ',delay:5200},
+  {text:'[ OK   ] Sistema pronto. Bem-vindo, Agente.',cls:'bright',delay:5300},
+  {text:'━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━',cls:'dim',delay:5400},
+  {text:null,type:'launch',delay:5700},
 ];
+function canAccess(section){
+  if(!currentUser)return false;
+  if(currentUser.isAdmin)return true;
+  return currentUser.level>=(SECTION_MIN[section]||99);
+}
+function isAdmin(){return currentUser&&currentUser.isAdmin;}
+
 function startBoot(){
   const out=document.getElementById('console-output');
   out.innerHTML=''; document.getElementById('console-prompt').style.display='none';
-  let s=Date.now();
+  const s=Date.now();
   bootClockInterval=setInterval(()=>{
     const e=Math.floor((Date.now()-s)/1000);
-    document.getElementById('boot-clock').textContent=`00:${String(Math.floor(e/60)).padStart(2,'0')}:${String(e%60).padStart(2,'0')}`;
+    const el=document.getElementById('boot-clock');
+    if(el)el.textContent=`00:${String(Math.floor(e/60)).padStart(2,'0')}:${String(e%60).padStart(2,'0')}`;
   },1000);
   BOOT_SEQ.forEach(step=>setTimeout(()=>execBootStep(step,out),step.delay));
 }
@@ -749,19 +908,21 @@ function execBootStep(step,out){
   if(step.text!==null&&!step.type){addLine(out,step.text,step.cls);return;}
   if(!u)return;
   switch(step.type){
-    case 'db-count': addLine(out,`[ OK   ] ${DB.users.length} usuários | ${Object.values(DB.entries).flat().length} entradas carregados`,'green');break;
-    case 'user-verify': addLine(out,`[ AUTH ] Agente identificado: ${u.id} — ${u.name}`,'bright');break;
-    case 'access-level': addLine(out,`[ AUTH ] Nível de acesso: ${LEVEL_LABELS[u.level]}`,'bright');break;
+    case 'db-connect':
+      addLine(out,'[ OK   ] Firebase Firestore — conexão estabelecida','green'); break;
+    case 'user-verify':
+      addLine(out,`[ AUTH ] Agente identificado: ${u.id} — ${u.name}`,'bright'); break;
+    case 'access-level':
+      addLine(out,`[ AUTH ] Nível: ${LEVEL_LABELS[u.level]} | Equipe: ${u.team||'—'}`,'bright'); break;
     case 'module-load':{
       NAV_DEFS.filter(n=>canAccess(n.section)).forEach((n,i)=>
         setTimeout(()=>addLine(out,`[ OK   ] Módulo carregado: ${SECTION_LABELS[n.section]}`,'green'),i*80));
       break;
     }
-    case 'sheet-load':{
-      if(!u.isAdmin&&DB.sheets[u.id]) addLine(out,`[ OK   ] Ficha do agente ${u.id} carregada`,'green');
-      else if(u.isAdmin) addLine(out,`[ OK   ] Acesso total às fichas concedido`,'green');
+    case 'sheet-load':
+      if(!u.isAdmin) addLine(out,`[ OK   ] Ficha de ${u.id} carregada do Firestore`,'green');
+      else addLine(out,'[ OK   ] Acesso total às fichas concedido','green');
       break;
-    }
     case 'progress':{
       const w=document.createElement('span'); w.className='console-line';
       w.innerHTML='Carregando interface: <span class="pbar"><span class="pbar-fill" id="pbar-fill" style="width:0%"></span></span> <span id="pbar-pct">0%</span>';
@@ -772,7 +933,7 @@ function execBootStep(step,out){
         if(f)f.style.width=pct.toFixed(0)+'%'; if(t)t.textContent=pct.toFixed(0)+'%';
         const o=document.getElementById('boot-outer'); if(o)o.scrollTop=o.scrollHeight;
         if(pct>=100)clearInterval(pi);
-      },70);break;
+      },70); break;
     }
     case 'launch':{
       clearInterval(bootClockInterval);
@@ -781,28 +942,25 @@ function execBootStep(step,out){
       const ti=setInterval(()=>{
         document.getElementById('prompt-text').textContent=txt.slice(0,i++);
         const o=document.getElementById('boot-outer'); if(o)o.scrollTop=o.scrollHeight;
-        if(i>txt.length){clearInterval(ti);setTimeout(()=>{showScreen('screen-hub');buildHub();startSessionTimer();},700);}
-      },40);break;
+        if(i>txt.length){clearInterval(ti);setTimeout(async()=>{
+          await seedIfEmpty();
+          _allUsers=await fbList(COL.users());
+          showScreen('screen-hub'); buildHub(); startSessionTimer();
+        },600);}
+      },40); break;
     }
   }
 }
 
-// ═══ ACCESS ═══
-function canAccess(section){
-  if(!currentUser)return false;
-  if(currentUser.isAdmin)return true;
-  return currentUser.level>=(SECTION_MIN[section]||99);
-}
-function isAdmin(){return currentUser&&currentUser.isAdmin;}
-
-// ═══ HUB ═══
+// ═══════════════════════════════════════════════════════════════
+//  HUB
+// ═══════════════════════════════════════════════════════════════
 function buildHub(){
   const u=currentUser;
   document.getElementById('hub-username').textContent=u.name;
   document.getElementById('hub-role').textContent=u.role;
   const pill=document.getElementById('hub-pill');
   pill.textContent=LEVEL_LABELS[u.level]; pill.className='access-pill '+LEVEL_CLASSES[u.level];
-  // team pill
   let tp=document.getElementById('hub-team-pill');
   if(!tp){tp=document.createElement('div');tp.id='hub-team-pill';tp.className='team-pill';
     document.getElementById('hub-pill').parentNode.insertBefore(tp,document.getElementById('hub-pill'));}
@@ -824,21 +982,23 @@ function buildNav(){
 }
 function navigate(section){
   if(!canAccess(section))return;
+  if(_chatUnsub&&section!=='chat'){_chatUnsub();_chatUnsub=null;}
   currentSection=section;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.section===section));
   document.getElementById('topbar-module').textContent=SECTION_LABELS[section]||section;
   addLog(currentUser.id,`Acessou: ${SECTION_LABELS[section]}`,'ok');
   const area=document.getElementById('content-area'); area.innerHTML='';
   switch(section){
-    case 'agente':     renderAgentSheet(area);break;
-    case 'dashboard':  renderDashboard(area);break;
-    case 'arquivos':   renderEntries(area,'arquivos');break;
-    case 'relatorios': renderEntries(area,'relatorios');break;
-    case 'intel':      renderEntries(area,'intel');break;
-    case 'dossies':    renderEntries(area,'dossies');break;
-    case 'opsNegras':  renderEntries(area,'opsNegras');break;
-    case 'controle':   renderControle(area);break;
-    case 'adminPanel': renderAdminPanel(area);break;
+    case 'agente':     renderAgentSheet(area); break;
+    case 'dashboard':  renderDashboard(area);  break;
+    case 'chat':       renderChat(area);       break;
+    case 'arquivos':   renderEntries(area,'arquivos');   break;
+    case 'relatorios': renderEntries(area,'relatorios'); break;
+    case 'intel':      renderEntries(area,'intel');      break;
+    case 'dossies':    renderEntries(area,'dossies');    break;
+    case 'opsNegras':  renderEntries(area,'opsNegras');  break;
+    case 'controle':   renderControle(area);   break;
+    case 'adminPanel': renderAdminPanel(area); break;
   }
 }
 function updateTopbarTime(){const el=document.getElementById('topbar-time');if(el)el.textContent=new Date().toLocaleTimeString('pt-BR');}
@@ -852,75 +1012,90 @@ function startSessionTimer(){
   },1000);
 }
 
-// ═══════════════════════════════════════════════════
-//  AGENT SHEET
-// ═══════════════════════════════════════════════════
-function getSheet(uid){return DB.sheets[uid];}
+// ═══════════════════════════════════════════════════════════════
+//  MODAL
+// ═══════════════════════════════════════════════════════════════
+function openModal(title,body,footer=''){
+  document.getElementById('modal-title').textContent=title;
+  document.getElementById('modal-body').innerHTML=body;
+  document.getElementById('modal-footer').innerHTML=footer;
+  document.getElementById('modal-bg').classList.add('open');
+}
+function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
+document.getElementById('modal-bg').addEventListener('click',e=>{
+  if(e.target===document.getElementById('modal-bg'))closeModal();
+});
+
+// ═══════════════════════════════════════════════════════════════
+//  AGENT SHEET  (read from Firestore)
+// ═══════════════════════════════════════════════════════════════
 function sheetUid(){
-  // admin viewing someone else?
-  if(isAdmin()&&window._adminViewingUid)return window._adminViewingUid;
+  if(isAdmin()&&_adminViewingUid)return _adminViewingUid;
   return currentUser.isAdmin?null:currentUser.id;
 }
 
-function renderAgentSheet(area){
+async function renderAgentSheet(area){
   const uid=sheetUid();
   if(!uid){
-    // admin: show user picker
-    window._adminViewingUid=null;
+    // Admin: user picker
+    _adminViewingUid=null;
+    const users=_allUsers.filter(u=>!u.isAdmin);
     area.innerHTML=`
       <div class="sec-title">FICHAS DOS AGENTES</div>
       <div style="display:flex;flex-wrap:wrap;gap:10px">
-        ${DB.users.filter(u=>!u.isAdmin).map(u=>`
+        ${users.map(u=>`
           <div class="module-tile" style="min-width:200px" onclick="adminViewSheet('${u.id}')">
             <div class="mt-name">${u.id}</div>
             <div class="mt-desc" style="color:var(--txt-b)">${u.name}</div>
             <div style="display:flex;gap:6px;margin-top:6px;align-items:center">
               <span class="team-pill" style="margin-top:0">${u.team||'—'}</span>
-              <span class="access-pill ${LEVEL_CLASSES[u.level]}" style="margin-top:0">${LEVEL_LABELS[u.level]}</span>
+              <span class="access-pill ${LEVEL_CLASSES[u.level]||'lvl-1'}" style="margin-top:0">${LEVEL_LABELS[u.level]||''}</span>
             </div>
           </div>`).join('')}
       </div>`;
     return;
   }
-  const sheet=getSheet(uid);
-  if(!sheet){area.innerHTML='<div class="empty-state">FICHA NÃO ENCONTRADA</div>';return;}
+
+  area.innerHTML='<div class="empty-state">CARREGANDO FICHA...</div>';
+  let sheet=await fbGet(COL.sheets(uid));
+  if(!sheet){
+    sheet=mkSheet(uid);
+    await fbSet(COL.sheets(uid),sheet);
+  }
+
   const editable=isAdmin()||currentUser.id===uid;
   const ae=editable?'admin-editable':'';
-  const viewingOther=isAdmin()&&window._adminViewingUid;
-  const viewedUser=viewingOther?DB.users.find(u=>u.id===uid):null;
+  const viewingOther=isAdmin()&&_adminViewingUid;
+  const viewedUser=viewingOther?_allUsers.find(u=>u.id===uid):null;
 
   area.style.display='block'; area.style.overflowY='auto';
   area.innerHTML=`
-    <!-- BACK BAR (admin only, when viewing another user) -->
     ${viewingOther?`
     <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;padding:8px 12px;
       border:1px solid var(--border);background:var(--panel)">
       <button class="btn-red btn-sm" onclick="backToSheetPicker()">← VOLTAR</button>
-      <span style="font-size:10px;letter-spacing:3px;color:var(--txt-dim)">VISUALIZANDO FICHA:</span>
+      <span style="font-size:10px;letter-spacing:3px;color:var(--txt-dim)">VISUALIZANDO:</span>
       <span style="font-size:12px;letter-spacing:2px;color:var(--txt-b)">${uid}</span>
       <span style="font-size:11px;letter-spacing:1px;color:var(--txt-dim)">— ${viewedUser?viewedUser.name:''}</span>
       <span class="team-pill" style="margin-top:0;margin-left:auto">${viewedUser?viewedUser.team:''}</span>
     </div>`:''}
-    <!-- TAB NAV -->
     <div style="display:flex;gap:0;border-bottom:1px solid var(--border);margin-bottom:14px">
       <button class="sheet-tab active" data-tab="info"      onclick="switchTab(this,'info')">INFORMAÇÕES</button>
       <button class="sheet-tab"        data-tab="status"    onclick="switchTab(this,'status')">STATUS</button>
       <button class="sheet-tab"        data-tab="equipment" onclick="switchTab(this,'equipment')">EQUIPAMENTOS</button>
       <button class="sheet-tab"        data-tab="inventory" onclick="switchTab(this,'inventory')">INVENTÁRIO</button>
     </div>
-
     <!-- TAB: INFO -->
     <div id="tab-info" class="sheet-tab-content">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
-        <!-- left col -->
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="sheet-panel">
             <div class="sec-title">IDENTIFICAÇÃO</div>
             <div class="info-grid">
               ${['name','affiliation','age','height','id','class','rank'].map(k=>`
-                <div class="info-field" ${k==='affiliation'||k==='name'?'style="grid-column:1/-1"':''}>
+                <div class="info-field" ${(k==='affiliation'||k==='name')?'style="grid-column:1/-1"':''}>
                   <div class="info-label">${k.toUpperCase()}</div>
-                  <input class="info-value ${ae}" value="${sheet.info[k]||''}"
+                  <input class="info-value ${ae}" value="${sheet.info?sheet.info[k]||'':''}"
                     ${editable?'':'readonly'}
                     onchange="saveInfo('${uid}','${k}',this.value)"
                     placeholder="${editable?k.toUpperCase():'—'}">
@@ -931,10 +1106,9 @@ function renderAgentSheet(area){
             <div class="sec-title">MISC.</div>
             <textarea class="sheet-textarea ${ae}" rows="5"
               ${editable?'':'readonly'}
-              onchange="saveMisc('${uid}',this.value)">${sheet.misc}</textarea>
+              onchange="saveMisc('${uid}',this.value)">${sheet.misc||''}</textarea>
           </div>
         </div>
-        <!-- right col -->
         <div style="display:flex;flex-direction:column;gap:12px">
           <div class="sheet-panel">
             <div class="sec-title">POTENTIAL</div>
@@ -946,10 +1120,10 @@ function renderAgentSheet(area){
               ${['str','agi','wil','cha','rst','rsl'].map(a=>`
                 <div style="display:flex;align-items:center;gap:6px">
                   <span style="font-size:10px;letter-spacing:2px;color:var(--txt-dim);width:30px">${a.toUpperCase()}</span>
-                  <input type="range" min="0" max="5" value="${sheet.potential[a]}"
-                    style="flex:1;accent-color:var(--red)"
+                  <input type="range" min="0" max="5" value="${(sheet.potential&&sheet.potential[a])||0}"
+                    style="flex:1;accent-color:var(--ac)"
                     oninput="savePotential('${uid}','${a}',this.value)">
-                  <span style="font-size:11px;color:var(--ac-b);width:14px">${sheet.potential[a]}</span>
+                  <span id="pv-${uid}-${a}" style="font-size:11px;color:var(--ac-b);width:14px">${(sheet.potential&&sheet.potential[a])||0}</span>
                 </div>`).join('')}
             </div>`:''}
           </div>
@@ -957,12 +1131,11 @@ function renderAgentSheet(area){
             <div class="sec-title">HISTORIC</div>
             <textarea class="sheet-textarea ${ae}" rows="10"
               ${editable?'':'readonly'}
-              onchange="saveHistoric('${uid}',this.value)">${sheet.historic}</textarea>
+              onchange="saveHistoric('${uid}',this.value)">${sheet.historic||''}</textarea>
           </div>
         </div>
       </div>
     </div>
-
     <!-- TAB: STATUS -->
     <div id="tab-status" class="sheet-tab-content" style="display:none">
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
@@ -971,65 +1144,61 @@ function renderAgentSheet(area){
           <div class="hp-ep-row">
             <div class="hp-box">
               <span class="hp-icon">❤</span>
-              <span class="hp-val">${editable?`<input type="number" min="0" max="${sheet.status.hpMax}" value="${sheet.status.hp}"
+              <span class="hp-val">${editable?`<input type="number" min="0" value="${sheet.status?sheet.status.hp:10}"
                 style="width:40px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--ac-b);font-family:Orbitron,sans-serif;font-size:14px;outline:none;text-align:center"
-                onchange="saveStatus('${uid}','hp',this.value)">`:`${sheet.status.hp}`}/${sheet.status.hpMax}</span>
+                onchange="saveStatus('${uid}','hp',this.value)">`:`${sheet.status?sheet.status.hp:10}`}/${sheet.status?sheet.status.hpMax:10}</span>
             </div>
             <div class="ep-box">
               <span style="font-size:16px">🔵</span>
-              <span class="hp-val" style="color:#4488ff">${sheet.status.ep}/${sheet.status.epMax}</span>
+              <span class="hp-val" style="color:#4488ff">${sheet.status?sheet.status.ep:10}/${sheet.status?sheet.status.epMax:10}</span>
             </div>
           </div>
           <div style="border:1px solid var(--border);padding:10px;margin-bottom:10px;display:flex;align-items:center;gap:16px">
             <div>
               <div style="font-family:'Orbitron',sans-serif;font-size:11px;letter-spacing:3px;color:var(--txt-dim);margin-bottom:4px">LEVEL</div>
-              ${editable?`<input type="number" min="0" value="${sheet.level.current}"
-                style="font-family:Orbitron,sans-serif;font-size:28px;font-weight:900;color:#ff3333;background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;width:60px"
-                onchange="saveLevel('${uid}',this.value)">`:`<div class="level-num">${sheet.level.current}</div>`}
+              ${editable?`<input type="number" min="0" value="${sheet.level?sheet.level.current:0}"
+                style="font-family:Orbitron,sans-serif;font-size:28px;font-weight:900;color:var(--ac-b);background:transparent;border:none;border-bottom:1px solid var(--border);outline:none;width:60px"
+                onchange="saveLevel('${uid}',this.value)">`:`<div class="level-num">${sheet.level?sheet.level.current:0}</div>`}
             </div>
             <div style="flex:1">
-              <div class="exp-bar-wrap"><div class="exp-bar-fill" style="width:${Math.min(100,sheet.level.exp/sheet.level.expMax*100)}%"></div></div>
-              <div class="exp-label">EXP: ${sheet.level.exp}/${sheet.level.expMax}</div>
-              ${editable?`<input type="number" min="0" value="${sheet.level.exp}" style="font-size:10px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--ac-b);outline:none;width:50px" onchange="saveExp('${uid}',this.value)"> / 
-              <input type="number" min="1" value="${sheet.level.expMax}" style="font-size:10px;background:transparent;border:none;border-bottom:1px solid rgba(150,0,0,.3);color:#ff4444;outline:none;width:50px" onchange="saveExpMax('${uid}',this.value)">`:''}
+              <div class="exp-bar-wrap"><div class="exp-bar-fill" style="width:${Math.min(100,((sheet.level?sheet.level.exp:0)/(sheet.level?sheet.level.expMax:100))*100)}%"></div></div>
+              <div class="exp-label">EXP: ${sheet.level?sheet.level.exp:0}/${sheet.level?sheet.level.expMax:100}</div>
             </div>
           </div>
           ${['strength','agility','resistance','resilience','charisma','willpower'].map(st=>`
             <div class="stat-row">
               <div class="stat-lbl">${st.toUpperCase()}:</div>
-              <div class="stat-base">${sheet.status[st].base}</div>
+              <div class="stat-base">${sheet.status&&sheet.status[st]?sheet.status[st].base:1}</div>
               <div class="stat-plus">+</div>
-              ${editable?`<input type="number" min="0" value="${sheet.status[st].bonus}"
+              ${editable?`<input type="number" min="0" value="${sheet.status&&sheet.status[st]?sheet.status[st].bonus:0}"
                 style="width:36px;background:transparent;border:none;border-bottom:1px solid var(--border);color:var(--ac-b);font-family:Orbitron,sans-serif;font-size:13px;outline:none;text-align:center"
-                onchange="saveStatBonus('${uid}','${st}',this.value)">`:`<div class="stat-bonus">${sheet.status[st].bonus}</div>`}
+                onchange="saveStatBonus('${uid}','${st}',this.value)">`:`<div class="stat-bonus">${sheet.status&&sheet.status[st]?sheet.status[st].bonus:0}</div>`}
             </div>`).join('')}
         </div>
         <div class="sheet-panel">
           <div class="sec-title">HABILIDADES</div>
-          <div style="font-size:10px;letter-spacing:2px;color:rgba(180,80,80,.6);margin-bottom:8px">
-            ATIVAS: ${sheet.skills.filter(s=>s.active).length}/${sheet.skills.length}
+          <div style="font-size:10px;letter-spacing:2px;color:var(--txt-dim);margin-bottom:8px">
+            ATIVAS: ${(sheet.skills||[]).filter(s=>s.active).length}/${(sheet.skills||[]).length}
           </div>
-          ${sheet.skills.map((sk,i)=>`
+          ${(sheet.skills||[]).map((sk,i)=>`
             <div class="skill-slot ${sk.active?'':'inactive'}">
               <div class="skill-bolt">${sk.active?'⚡':'○'}</div>
               <div style="flex:1">
-                ${editable?`<input value="${sk.name}" placeholder="NOME DA HABILIDADE"
+                ${editable?`<input value="${sk.name||''}" placeholder="NOME DA HABILIDADE"
                   style="background:transparent;border:none;border-bottom:1px solid var(--border);
                     color:var(--ac-b);font-family:'Share Tech Mono',monospace;font-size:12px;letter-spacing:2px;
                     outline:none;width:100%;margin-bottom:4px"
                   onchange="saveSkillName('${uid}',${i},this.value)">`:`<div class="skill-name">${sk.name||'—'}</div>`}
-                ${editable?`<textarea rows="2" placeholder="Descrição da habilidade..."
-                  style="background:transparent;border:none;color:rgba(200,100,100,.7);
-                    font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:1px;
-                    outline:none;width:100%;resize:none;line-height:1.4"
-                  onchange="saveSkillDesc('${uid}',${i},this.value)">${sk.desc}</textarea>`:`<div class="skill-text">${sk.desc||'—'}</div>`}
+                ${editable?`<textarea rows="2" placeholder="Descrição..."
+                  style="background:transparent;border:none;color:var(--txt);font-family:'Share Tech Mono',monospace;
+                    font-size:10px;letter-spacing:1px;outline:none;width:100%;resize:none;line-height:1.4"
+                  onchange="saveSkillDesc('${uid}',${i},this.value)">${sk.desc||''}</textarea>`:`<div class="skill-text">${sk.desc||'—'}</div>`}
               </div>
               ${editable?`<button class="btn-red btn-sm" onclick="toggleSkillActive('${uid}',${i})">${sk.active?'ATIVA':'INATIVA'}</button>`:''}
             </div>`).join('')}
         </div>
       </div>
     </div>
-
     <!-- TAB: EQUIPMENT -->
     <div id="tab-equipment" class="sheet-tab-content" style="display:none">
       <div class="sheet-panel">
@@ -1039,22 +1208,20 @@ function renderAgentSheet(area){
             <svg class="body-svg" viewBox="0 0 160 200" xmlns="http://www.w3.org/2000/svg">
               <circle cx="80" cy="80" r="74" fill="none" stroke="rgba(150,0,0,.4)" stroke-width="1"/>
               <circle cx="80" cy="80" r="50" fill="none" stroke="rgba(150,0,0,.2)" stroke-width="1"/>
-              <!-- vitruvian body simplified -->
               <circle cx="80" cy="30" r="12" fill="none" stroke="#cc0000" stroke-width="2"/>
               <line x1="80" y1="42" x2="80" y2="110" stroke="#cc0000" stroke-width="2"/>
               <line x1="80" y1="60" x2="45" y2="85" stroke="#cc0000" stroke-width="2"/>
               <line x1="80" y1="60" x2="115" y2="85" stroke="#cc0000" stroke-width="2"/>
               <line x1="80" y1="110" x2="58" y2="155" stroke="#cc0000" stroke-width="2"/>
               <line x1="80" y1="110" x2="102" y2="155" stroke="#cc0000" stroke-width="2"/>
-              <!-- outer arms diagonal -->
               <line x1="80" y1="60" x2="30" y2="100" stroke="rgba(150,0,0,.4)" stroke-width="1" stroke-dasharray="3"/>
               <line x1="80" y1="60" x2="130" y2="100" stroke="rgba(150,0,0,.4)" stroke-width="1" stroke-dasharray="3"/>
             </svg>
           </div>
           <div class="equip-slots-col">
-            <div class="sec-title" style="grid-column:1/-1">SLOTS DE EQUIPAMENTO</div>
+            <div class="sec-title" style="grid-column:1/-1">SLOTS</div>
             ${SLOT_DEFS.map(slot=>{
-              const item=getSheet(uid).equipment[slot.id];
+              const item=sheet.equipment?sheet.equipment[slot.id]:null;
               const rarity=item?item.rarity:'';
               return `<div class="equip-slot ${item?'has-item border-'+rarity:''}" onclick="openSlotPicker('${uid}','${slot.id}')">
                 <div class="slot-icon">${slot.icon}</div>
@@ -1069,7 +1236,6 @@ function renderAgentSheet(area){
         </div>
       </div>
     </div>
-
     <!-- TAB: INVENTORY -->
     <div id="tab-inventory" class="sheet-tab-content" style="display:none">
       <div class="sheet-panel">
@@ -1084,13 +1250,10 @@ function renderAgentSheet(area){
         </div>
         <div class="inv-grid" id="inv-grid-${uid}"></div>
       </div>
-    </div>
-  `;
+    </div>`;
 
-  // add tab styles dynamically once
   if(!document.getElementById('tab-style')){
-    const s=document.createElement('style');
-    s.id='tab-style';
+    const s=document.createElement('style'); s.id='tab-style';
     s.textContent=`.sheet-tab{background:transparent;border:none;border-bottom:2px solid transparent;
       color:var(--txt-dim);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:3px;
       padding:8px 16px;cursor:pointer;transition:all .12s;}
@@ -1098,10 +1261,9 @@ function renderAgentSheet(area){
     .sheet-tab.active{color:var(--ac-b);border-bottom-color:var(--ac);}`;
     document.head.appendChild(s);
   }
-
   setTimeout(()=>{
-    drawHexRadar(uid);
-    renderInventoryGrid(uid,'');
+    drawHexRadar(uid,sheet);
+    renderInventoryGrid(uid,sheet,'');
   },50);
 }
 
@@ -1110,60 +1272,72 @@ function switchTab(btn,tabId){
   document.querySelectorAll('.sheet-tab-content').forEach(c=>c.style.display='none');
   btn.classList.add('active');
   document.getElementById('tab-'+tabId).style.display='block';
-  if(tabId==='inventory'){const uid=sheetUid();if(uid)renderInventoryGrid(uid,'');}
+  if(tabId==='inventory'){
+    const uid=sheetUid(); if(uid) fbGet(COL.sheets(uid)).then(s=>renderInventoryGrid(uid,s,''));
+  }
 }
+function adminViewSheet(uid){_adminViewingUid=uid;renderAgentSheet(document.getElementById('content-area'));}
+function backToSheetPicker(){_adminViewingUid=null;renderAgentSheet(document.getElementById('content-area'));}
 
-function adminViewSheet(uid){
-  window._adminViewingUid=uid;
-  renderAgentSheet(document.getElementById('content-area'));
+// ── Save helpers (all write to Firestore) ──
+async function saveInfo(uid,key,val){
+  await fbSet(COL.sheets(uid),{info:{[key]:val}});
 }
-function backToSheetPicker(){
-  window._adminViewingUid=null;
-  renderAgentSheet(document.getElementById('content-area'));
+async function saveMisc(uid,val){await fbSet(COL.sheets(uid),{misc:val});}
+async function saveHistoric(uid,val){await fbSet(COL.sheets(uid),{historic:val});}
+async function savePotential(uid,attr,val){
+  const v=parseInt(val)||0;
+  const update={potential:{}}; update.potential[attr]=v;
+  await fbSet(COL.sheets(uid),update);
+  const sp=document.getElementById(`pv-${uid}-${attr}`); if(sp)sp.textContent=v;
+  // re-draw radar from current DOM values
+  const canvas=document.getElementById(`hex-canvas-${uid}`);
+  if(!canvas)return;
+  const sheet=await fbGet(COL.sheets(uid));
+  if(sheet)drawHexRadar(uid,sheet);
 }
-
-// ── SAVE HELPERS ──
-function saveInfo(uid,key,val){const s=getSheet(uid);if(s){s.info[key]=val;addLog(currentUser.id,`Editou ficha ${uid}: ${key}`,'ok');}}
-function saveMisc(uid,val){const s=getSheet(uid);if(s)s.misc=val;}
-function saveHistoric(uid,val){const s=getSheet(uid);if(s)s.historic=val;}
-function savePotential(uid,attr,val){
-  const s=getSheet(uid);if(!s)return;
-  s.potential[attr]=parseInt(val)||0;
-  // update display value on range
-  drawHexRadar(uid);
-  // update sibling span
-  const badges=document.getElementById('attr-badges-'+uid);
-  if(badges)renderAttrBadges(uid,badges);
-  // update the span next to slider
-  const sliders=document.querySelectorAll(`[oninput*="savePotential('${uid}','${attr}'"]`);
-  sliders.forEach(sl=>{const sp=sl.nextElementSibling;if(sp)sp.textContent=val;});
+async function saveStatus(uid,key,val){
+  const update={status:{[key]:parseInt(val)||0}};
+  await fbSet(COL.sheets(uid),update);
 }
-function saveStatus(uid,key,val){const s=getSheet(uid);if(s)s.status[key]=parseInt(val)||0;}
-function saveStatBonus(uid,st,val){const s=getSheet(uid);if(s)s.status[st].bonus=parseInt(val)||0;}
-function saveLevel(uid,val){const s=getSheet(uid);if(s)s.level.current=parseInt(val)||0;}
-function saveExp(uid,val){const s=getSheet(uid);if(s)s.level.exp=parseInt(val)||0;}
-function saveExpMax(uid,val){const s=getSheet(uid);if(s)s.level.expMax=parseInt(val)||1;}
-function saveSkillName(uid,i,val){const s=getSheet(uid);if(s)s.skills[i].name=val;}
-function saveSkillDesc(uid,i,val){const s=getSheet(uid);if(s)s.skills[i].desc=val;}
-function toggleSkillActive(uid,i){
-  const s=getSheet(uid);if(!s)return;
-  s.skills[i].active=!s.skills[i].active;
+async function saveStatBonus(uid,st,val){
+  const update={status:{[st]:{bonus:parseInt(val)||0}}};
+  await fbSet(COL.sheets(uid),update);
+}
+async function saveLevel(uid,val){await fbSet(COL.sheets(uid),{level:{current:parseInt(val)||0}});}
+async function saveSkillName(uid,i,val){
+  const s=await fbGet(COL.sheets(uid)); if(!s)return;
+  const skills=s.skills||[]; if(!skills[i])return;
+  skills[i].name=val; await fbSet(COL.sheets(uid),{skills});
+}
+async function saveSkillDesc(uid,i,val){
+  const s=await fbGet(COL.sheets(uid)); if(!s)return;
+  const skills=s.skills||[]; if(!skills[i])return;
+  skills[i].desc=val; await fbSet(COL.sheets(uid),{skills});
+}
+async function toggleSkillActive(uid,i){
+  const s=await fbGet(COL.sheets(uid)); if(!s)return;
+  const skills=s.skills||[]; if(!skills[i])return;
+  skills[i].active=!skills[i].active;
+  await fbSet(COL.sheets(uid),{skills});
   navigate('agente');
 }
 
 // ── HEX RADAR ──
-function drawHexRadar(uid){
-  const canvas=document.getElementById('hex-canvas-'+uid);
-  if(!canvas)return;
-  const sheet=getSheet(uid);if(!sheet)return;
+function drawHexRadar(uid,sheet){
+  const canvas=document.getElementById(`hex-canvas-${uid}`);
+  if(!canvas||!sheet)return;
   const ctx=canvas.getContext('2d');
-  const W=240,H=220,cx=W/2,cy=H/2,R=90;
+  const W=240,H=220,cx=W/2,cy=H/2,R=88;
   const attrs=['str','agi','rst','rsl','cha','wil'];
   const labels=['STR','AGI','RST','RSL','CHA','WIL'];
-  const vals=attrs.map(a=>Math.max(0,Math.min(5,sheet.potential[a]||0))/5);
+  const pot=sheet.potential||{};
+  const vals=attrs.map(a=>Math.max(0,Math.min(5,pot[a]||0))/5);
+  const style=getComputedStyle(document.documentElement);
+  const acB=style.getPropertyValue('--ac-b').trim()||'#ff4444';
+  const acD=style.getPropertyValue('--ac-d').trim()||'rgba(180,0,0,.5)';
+  const acF=style.getPropertyValue('--ac-f').trim()||'rgba(180,0,0,.1)';
   ctx.clearRect(0,0,W,H);
-
-  // grid hexagons
   for(let r=1;r<=5;r++){
     ctx.beginPath();
     for(let i=0;i<6;i++){
@@ -1172,64 +1346,54 @@ function drawHexRadar(uid){
       i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
     }
     ctx.closePath();
-    ctx.strokeStyle=`rgba(${getComputedStyle(document.documentElement).getPropertyValue('--ac-b').trim()||'255,60,60'},${r===5?0.35:0.12})`;
-    ctx.lineWidth=r===5?1.5:0.8;
-    ctx.stroke();
+    ctx.strokeStyle=`rgba(128,128,128,${r===5?0.35:0.15})`;
+    ctx.lineWidth=r===5?1.5:0.8; ctx.stroke();
   }
-  // spokes
   for(let i=0;i<6;i++){
     const ang=Math.PI/180*(60*i-90);
     ctx.beginPath();ctx.moveTo(cx,cy);
     ctx.lineTo(cx+R*Math.cos(ang),cy+R*Math.sin(ang));
-    ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--border').trim()||'rgba(150,0,0,.2)';ctx.lineWidth=0.8;ctx.stroke();
+    ctx.strokeStyle='rgba(128,128,128,.18)';ctx.lineWidth=0.8;ctx.stroke();
   }
-  // filled area
   ctx.beginPath();
   for(let i=0;i<6;i++){
     const ang=Math.PI/180*(60*i-90);
     const x=cx+R*vals[i]*Math.cos(ang),y=cy+R*vals[i]*Math.sin(ang);
     i===0?ctx.moveTo(x,y):ctx.lineTo(x,y);
   }
-  ctx.closePath();
-  ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--ac-f').trim()||'rgba(200,0,0,.25)';ctx.fill();
-  ctx.strokeStyle=getComputedStyle(document.documentElement).getPropertyValue('--ac-b').trim()||'rgba(255,50,50,.8)';ctx.lineWidth=2;ctx.stroke();
-  // dots
+  ctx.closePath();ctx.fillStyle=acF;ctx.fill();
+  ctx.strokeStyle=acB;ctx.lineWidth=2;ctx.stroke();
   for(let i=0;i<6;i++){
     const ang=Math.PI/180*(60*i-90);
     const x=cx+R*vals[i]*Math.cos(ang),y=cy+R*vals[i]*Math.sin(ang);
     ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);
-    ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--ac-b').trim()||'#ff3333';ctx.fill();
+    ctx.fillStyle=acB;ctx.fill();
   }
-  // labels
-  ctx.font='bold 10px Orbitron,sans-serif';ctx.fillStyle=getComputedStyle(document.documentElement).getPropertyValue('--txt-b').trim()||'rgba(220,100,100,.9)';ctx.textAlign='center';
+  ctx.font='bold 10px Orbitron,sans-serif';ctx.fillStyle=acB;ctx.textAlign='center';
   for(let i=0;i<6;i++){
     const ang=Math.PI/180*(60*i-90);
     const x=cx+(R+18)*Math.cos(ang),y=cy+(R+18)*Math.sin(ang)+4;
     ctx.fillText(labels[i],x,y);
   }
-  // attr badges
-  const badgeEl=document.getElementById('attr-badges-'+uid);
-  if(badgeEl)renderAttrBadges(uid,badgeEl);
-}
-function renderAttrBadges(uid,el){
-  const s=getSheet(uid);if(!s)return;
-  el.innerHTML=['str','agi','wil','cha','rst','rsl'].map(a=>`
+  const badgeEl=document.getElementById(`attr-badges-${uid}`);
+  if(badgeEl)badgeEl.innerHTML=attrs.map(a=>`
     <div class="attr-badge">
       <span class="attr-name">${a.toUpperCase()}</span>
-      <span class="attr-val">${s.potential[a]||0}</span>
+      <span class="attr-val">${pot[a]||0}</span>
     </div>`).join('');
 }
 
 // ── EQUIPMENT ──
-function openSlotPicker(uid,slotId){
-  const sheet=getSheet(uid);if(!sheet)return;
+async function openSlotPicker(uid,slotId){
+  const sheet=await fbGet(COL.sheets(uid)); if(!sheet)return;
   const slotDef=SLOT_DEFS.find(s=>s.id===slotId);
-  const compatible=sheet.inventory.filter(item=>slotDef.cats.includes(item.category));
+  const inv=sheet.inventory||[];
+  const compatible=inv.filter(item=>slotDef.cats.includes(item.category));
   openModal(`EQUIPAR — ${slotDef.label}`,`
     ${compatible.length===0?'<div class="empty-state">Nenhum item compatível no inventário.</div>':
       compatible.map(item=>`
-        <div class="inv-item border-${item.rarity} bg-${item.rarity}"
-          style="margin-bottom:8px;cursor:pointer" onclick="equipItem('${uid}','${slotId}','${item.id}')">
+        <div class="inv-item border-${item.rarity} bg-${item.rarity}" style="margin-bottom:8px;cursor:pointer"
+          onclick="equipItem('${uid}','${slotId}','${item.id}')">
           <div class="inv-item-icon border-${item.rarity}">${ITEM_ICONS[item.category]||'📦'}</div>
           <div class="inv-item-body">
             <div class="inv-item-name rarity-${item.rarity}">${item.name}</div>
@@ -1239,36 +1403,35 @@ function openSlotPicker(uid,slotId){
         </div>`).join('')}`,
   `<button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
 }
-function equipItem(uid,slotId,itemId){
-  const sheet=getSheet(uid);if(!sheet)return;
-  const item=sheet.inventory.find(i=>i.id===itemId);
-  if(!item)return;
-  // unequip from any current slot
-  Object.keys(sheet.equipment).forEach(k=>{if(sheet.equipment[k]&&sheet.equipment[k].id===itemId)sheet.equipment[k]=null;});
-  sheet.equipment[slotId]=item;
-  addLog(currentUser.id,`Equipou ${item.name} em ${slotId} de ${uid}`,'ok');
-  closeModal(); navigate('agente');
-  setTimeout(()=>switchTab(document.querySelector('.sheet-tab[data-tab="equipment"]'),'equipment'),100);
+async function equipItem(uid,slotId,itemId){
+  const sheet=await fbGet(COL.sheets(uid)); if(!sheet)return;
+  const item=(sheet.inventory||[]).find(i=>i.id===itemId); if(!item)return;
+  const equip=sheet.equipment||{};
+  Object.keys(equip).forEach(k=>{if(equip[k]&&equip[k].id===itemId)equip[k]=null;});
+  equip[slotId]=item;
+  await fbSet(COL.sheets(uid),{equipment:equip});
+  closeModal(); renderAgentSheet(document.getElementById('content-area'));
+  setTimeout(()=>switchTab(document.querySelector('.sheet-tab[data-tab="equipment"]'),'equipment'),150);
 }
-function unequipSlot(uid,slotId){
-  const sheet=getSheet(uid);if(!sheet)return;
-  sheet.equipment[slotId]=null;
-  navigate('agente');
-  setTimeout(()=>switchTab(document.querySelector('.sheet-tab[data-tab="equipment"]'),'equipment'),100);
+async function unequipSlot(uid,slotId){
+  const sheet=await fbGet(COL.sheets(uid)); if(!sheet)return;
+  const equip=sheet.equipment||{};
+  equip[slotId]=null;
+  await fbSet(COL.sheets(uid),{equipment:equip});
+  renderAgentSheet(document.getElementById('content-area'));
+  setTimeout(()=>switchTab(document.querySelector('.sheet-tab[data-tab="equipment"]'),'equipment'),150);
 }
 
 // ── INVENTORY ──
-function renderInventoryGrid(uid,filter){
-  const sheet=getSheet(uid);if(!sheet)return;
-  const grid=document.getElementById('inv-grid-'+uid);if(!grid)return;
+function renderInventoryGrid(uid,sheet,filter){
+  const grid=document.getElementById(`inv-grid-${uid}`); if(!grid)return;
   const editable=isAdmin()||currentUser.id===uid;
-  let items=sheet.inventory;
-  if(filter){
-    items=items.filter(i=>i.category===filter||i.rarity===filter);
-  }
+  let items=(sheet&&sheet.inventory)||[];
+  if(filter) items=items.filter(i=>i.category===filter||i.rarity===filter);
   if(items.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1">INVENTÁRIO VAZIO</div>';return;}
+  const equip=(sheet&&sheet.equipment)||{};
   grid.innerHTML=items.map(item=>{
-    const equipped=Object.values(getSheet(uid).equipment).some(e=>e&&e.id===item.id);
+    const equipped=Object.values(equip).some(e=>e&&e.id===item.id);
     return`<div class="inv-item border-${item.rarity} bg-${item.rarity}">
       ${equipped?'<div class="inv-equip-badge">EQUIPADO</div>':''}
       <div class="inv-item-icon border-${item.rarity}" style="color:var(--c-${item.rarity})">${ITEM_ICONS[item.category]||'📦'}</div>
@@ -1284,143 +1447,155 @@ function renderInventoryGrid(uid,filter){
     </div>`;
   }).join('');
 }
-function filterInv(btn,uid,filter){
+async function filterInv(btn,uid,filter){
   document.querySelectorAll('.inv-filter-btn').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');
-  renderInventoryGrid(uid,filter);
+  const sheet=await fbGet(COL.sheets(uid));
+  renderInventoryGrid(uid,sheet,filter);
 }
 function openAddItem(uid){
-  openModal('ADICIONAR ITEM AO INVENTÁRIO',`
-    <div class="form-row"><label class="form-label">NOME DO ITEM</label><input class="form-input" id="it-name" placeholder="Nome do item"></div>
+  openModal('ADICIONAR ITEM',`
+    <div class="form-row"><label class="form-label">NOME</label><input class="form-input" id="it-name" placeholder="Nome do item"></div>
     <div class="form-row-2">
       <div class="form-row"><label class="form-label">CATEGORIA</label>
-        <select class="form-select" id="it-cat">
-          ${ITEM_CATS.map(c=>`<option value="${c}">${c.toUpperCase()}</option>`).join('')}
-        </select></div>
+        <select class="form-select" id="it-cat">${ITEM_CATS.map(c=>`<option value="${c}">${c.toUpperCase()}</option>`).join('')}</select></div>
       <div class="form-row"><label class="form-label">RARIDADE</label>
-        <select class="form-select" id="it-rarity">
-          ${RARITIES.map(r=>`<option value="${r}" style="color:var(--c-${r})">${RARITY_LABELS[r]}</option>`).join('')}
-        </select></div>
+        <select class="form-select" id="it-rarity">${RARITIES.map(r=>`<option value="${r}" style="color:var(--c-${r})">${RARITY_LABELS[r]}</option>`).join('')}</select></div>
     </div>
     <div class="form-row"><label class="form-label">DESCRIÇÃO</label>
-      <textarea class="form-textarea" id="it-desc" placeholder="Descrição do item, efeitos, stats..."></textarea></div>`,
+      <textarea class="form-textarea" id="it-desc" placeholder="Efeitos, stats..."></textarea></div>`,
   `<button class="btn-red btn-sm" onclick="submitAddItem('${uid}')">ADICIONAR</button>
    <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
 }
-function submitAddItem(uid){
+async function submitAddItem(uid){
   const name=document.getElementById('it-name').value.trim();
-  const cat=document.getElementById('it-cat').value;
-  const rarity=document.getElementById('it-rarity').value;
-  const desc=document.getElementById('it-desc').value.trim();
-  if(!name){alert('Informe o nome do item.');return;}
-  const sheet=getSheet(uid);if(!sheet)return;
-  const id='IT'+Date.now().toString().slice(-5);
-  sheet.inventory.push({id,name,category:cat,rarity,desc});
-  addLog(currentUser.id,`Adicionou item "${name}" ao inventário de ${uid}`,'ok');
-  closeModal(); renderInventoryGrid(uid,'');
+  if(!name){alert('Informe o nome.');return;}
+  const sheet=await fbGet(COL.sheets(uid)); if(!sheet)return;
+  const inv=sheet.inventory||[];
+  inv.push({id:'IT'+Date.now().toString().slice(-6),name,
+    category:document.getElementById('it-cat').value,
+    rarity:document.getElementById('it-rarity').value,
+    desc:document.getElementById('it-desc').value.trim()});
+  await fbSet(COL.sheets(uid),{inventory:inv});
+  closeModal();
+  const s2=await fbGet(COL.sheets(uid));
+  renderInventoryGrid(uid,s2,'');
 }
 function openEditItem(uid,itemId){
-  const sheet=getSheet(uid);if(!sheet)return;
-  const item=sheet.inventory.find(i=>i.id===itemId);if(!item)return;
-  openModal('EDITAR ITEM',`
-    <div class="form-row"><label class="form-label">NOME DO ITEM</label><input class="form-input" id="it-name" value="${item.name}"></div>
-    <div class="form-row-2">
-      <div class="form-row"><label class="form-label">CATEGORIA</label>
-        <select class="form-select" id="it-cat">
-          ${ITEM_CATS.map(c=>`<option value="${c}" ${item.category===c?'selected':''}>${c.toUpperCase()}</option>`).join('')}
-        </select></div>
-      <div class="form-row"><label class="form-label">RARIDADE</label>
-        <select class="form-select" id="it-rarity">
-          ${RARITIES.map(r=>`<option value="${r}" ${item.rarity===r?'selected':''} style="color:var(--c-${r})">${RARITY_LABELS[r]}</option>`).join('')}
-        </select></div>
-    </div>
-    <div class="form-row"><label class="form-label">DESCRIÇÃO</label>
-      <textarea class="form-textarea" id="it-desc">${item.desc}</textarea></div>`,
-  `<button class="btn-red btn-sm" onclick="submitEditItem('${uid}','${itemId}')">SALVAR</button>
-   <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
+  fbGet(COL.sheets(uid)).then(sheet=>{
+    if(!sheet)return;
+    const item=(sheet.inventory||[]).find(i=>i.id===itemId); if(!item)return;
+    openModal('EDITAR ITEM',`
+      <div class="form-row"><label class="form-label">NOME</label><input class="form-input" id="it-name" value="${item.name}"></div>
+      <div class="form-row-2">
+        <div class="form-row"><label class="form-label">CATEGORIA</label>
+          <select class="form-select" id="it-cat">${ITEM_CATS.map(c=>`<option value="${c}" ${item.category===c?'selected':''}>${c.toUpperCase()}</option>`).join('')}</select></div>
+        <div class="form-row"><label class="form-label">RARIDADE</label>
+          <select class="form-select" id="it-rarity">${RARITIES.map(r=>`<option value="${r}" ${item.rarity===r?'selected':''} style="color:var(--c-${r})">${RARITY_LABELS[r]}</option>`).join('')}</select></div>
+      </div>
+      <div class="form-row"><label class="form-label">DESCRIÇÃO</label>
+        <textarea class="form-textarea" id="it-desc">${item.desc||''}</textarea></div>`,
+    `<button class="btn-red btn-sm" onclick="submitEditItem('${uid}','${itemId}')">SALVAR</button>
+     <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
+  });
 }
-function submitEditItem(uid,itemId){
-  const sheet=getSheet(uid);if(!sheet)return;
-  const item=sheet.inventory.find(i=>i.id===itemId);if(!item)return;
-  item.name=document.getElementById('it-name').value.trim()||item.name;
-  item.category=document.getElementById('it-cat').value;
-  item.rarity=document.getElementById('it-rarity').value;
-  item.desc=document.getElementById('it-desc').value.trim();
-  addLog(currentUser.id,`Editou item ${itemId} de ${uid}`,'ok');
-  closeModal(); renderInventoryGrid(uid,'');
+async function submitEditItem(uid,itemId){
+  const sheet=await fbGet(COL.sheets(uid)); if(!sheet)return;
+  const inv=sheet.inventory||[];
+  const idx=inv.findIndex(i=>i.id===itemId); if(idx<0)return;
+  inv[idx].name=document.getElementById('it-name').value.trim()||inv[idx].name;
+  inv[idx].category=document.getElementById('it-cat').value;
+  inv[idx].rarity=document.getElementById('it-rarity').value;
+  inv[idx].desc=document.getElementById('it-desc').value.trim();
+  await fbSet(COL.sheets(uid),{inventory:inv});
+  closeModal();
+  const s2=await fbGet(COL.sheets(uid));
+  renderInventoryGrid(uid,s2,'');
 }
-function deleteItem(uid,itemId){
-  if(!confirm('Remover este item do inventário?'))return;
-  const sheet=getSheet(uid);if(!sheet)return;
-  // unequip if equipped
-  Object.keys(sheet.equipment).forEach(k=>{if(sheet.equipment[k]&&sheet.equipment[k].id===itemId)sheet.equipment[k]=null;});
-  sheet.inventory=sheet.inventory.filter(i=>i.id!==itemId);
-  addLog(currentUser.id,`Removeu item ${itemId} de ${uid}`,'warn');
-  renderInventoryGrid(uid,'');
+async function deleteItem(uid,itemId){
+  if(!confirm('Remover item?'))return;
+  const sheet=await fbGet(COL.sheets(uid)); if(!sheet)return;
+  const inv=(sheet.inventory||[]).filter(i=>i.id!==itemId);
+  const equip=sheet.equipment||{};
+  Object.keys(equip).forEach(k=>{if(equip[k]&&equip[k].id===itemId)equip[k]=null;});
+  await fbSet(COL.sheets(uid),{inventory:inv,equipment:equip});
+  const s2=await fbGet(COL.sheets(uid));
+  renderInventoryGrid(uid,s2,'');
 }
 
-// ═══════════════════════════════════════════════════
+// ═══════════════════════════════════════════════════════════════
 //  DASHBOARD
-// ═══════════════════════════════════════════════════
-function renderDashboard(area){
+// ═══════════════════════════════════════════════════════════════
+async function renderDashboard(area){
   const u=currentUser;
   const accessible=NAV_DEFS.filter(n=>canAccess(n.section)&&n.section!=='dashboard'&&n.section!=='agente');
-  const totalEntries=Object.values(DB.entries).flat().length;
   area.innerHTML=`
     <div><div class="sec-title">RESUMO</div>
       <div class="cards-row">
         <div class="stat-card"><div class="sc-label">NÍVEL</div>
           <div class="sc-value">${u.isAdmin?'ADM':u.level}</div><div class="sc-sub">${LEVEL_LABELS[u.level]}</div></div>
-        <div class="stat-card"><div class="sc-label">SEÇÕES ATIVAS</div>
-          <div class="sc-value">${accessible.length}</div><div class="sc-sub">AUTORIZADAS</div></div>
-        <div class="stat-card"><div class="sc-label">ENTRADAS</div>
-          <div class="sc-value">${totalEntries}</div><div class="sc-sub">DOCUMENTOS</div></div>
+        <div class="stat-card"><div class="sc-label">MÓDULOS</div>
+          <div class="sc-value">${accessible.length}</div><div class="sc-sub">AUTORIZADOS</div></div>
+        <div class="stat-card"><div class="sc-label">EQUIPE</div>
+          <div class="sc-value" style="font-size:18px;padding-top:4px">${u.team||'—'}</div></div>
         <div class="stat-card"><div class="sc-label">STATUS</div>
           <div class="sc-value" style="font-size:13px;padding-top:6px">ONLINE</div>
-          <div class="sc-sub" style="color:rgba(80,200,110,.7)">● CONEXÃO ATIVA</div></div>
+          <div class="sc-sub" style="color:rgba(80,200,110,.7)">● FIRESTORE ATIVO</div></div>
       </div></div>
     <div><div class="sec-title">MÓDULOS</div>
       <div class="modules-grid">
         ${accessible.map(n=>`<div class="module-tile" onclick="navigate('${n.section}')">
           <div class="mt-icon">${n.icon}</div>
           <div class="mt-name">${SECTION_LABELS[n.section]}</div>
-          <div class="mt-desc">${DB.entries[n.section]?DB.entries[n.section].length+' entrada(s)':''}</div>
+          <div class="mt-desc">${n.desc}</div>
         </div>`).join('')}
-      </div></div>
-    <div><div class="sec-title">ATIVIDADE RECENTE</div>
-      <div class="activity-log">
-        ${DB.accessLog.slice(0,6).map(l=>`
-          <div class="log-entry">
-            <span class="log-time">${l.time.split(' ')[1]||l.time}</span>
-            <span class="log-text log-${l.type}">[${l.type.toUpperCase()}] ${l.user} — ${l.action}</span>
-          </div>`).join('')}
       </div></div>`;
+  // load recent logs async
+  const logs=await loadLogs(todayKey());
+  const logHtml=logs.slice(0,8).map(l=>`
+    <div class="log-entry">
+      <span class="log-time">${l.time?l.time.split(' ')[1]||l.time:''}</span>
+      <span class="log-text log-${l.type}">[${(l.type||'ok').toUpperCase()}] ${l.user} — ${l.action}</span>
+    </div>`).join('');
+  area.innerHTML+=`<div><div class="sec-title">ATIVIDADE RECENTE (HOJE)</div>
+    <div class="activity-log">${logHtml||'<div class="empty-state">Sem atividade registrada hoje.</div>'}</div></div>`;
 }
 
-// ═══════════════════════════════════════════════════
-//  ENTRIES (generic)
-// ═══════════════════════════════════════════════════
-function renderEntries(area,section){
-  const entries=DB.entries[section]||[];
+// ═══════════════════════════════════════════════════════════════
+//  ENTRIES (generic — reads/writes Firestore)
+// ═══════════════════════════════════════════════════════════════
+// Who can create entries in a section
+function canCreateEntry(section){
+  if(isAdmin())return true;
+  const minLevel=CREATE_PERMS[section];
+  if(!minLevel)return false; // arquivos, opsNegras — admin only
+  return currentUser.level>=minLevel;
+}
+
+async function renderEntries(area,section){
+  area.innerHTML='<div class="empty-state">CARREGANDO...</div>';
+  let entries=await fbList(COL.entries(section),orderBy('date','desc'));
+  const canCreate=canCreateEntry(section);
   const canEdit=isAdmin();
+
   function render(filter=''){
     area.innerHTML='';
     const wrap=document.createElement('div'); wrap.className='mod-view';
     const toolbar=document.createElement('div'); toolbar.className='mod-toolbar';
     toolbar.innerHTML=`<input class="mod-search" id="search-${section}" type="text" placeholder="BUSCAR..." value="${filter}">
-      ${canEdit?`<button class="btn-red" onclick="openCreateEntry('${section}')">+ NOVA ENTRADA</button>`:''}`;
+      ${canCreate?`<button class="btn-red" onclick="openCreateEntry('${section}')">+ NOVA ENTRADA</button>`:''}`;
     wrap.appendChild(toolbar);
     const list=document.createElement('div'); list.className='entries-list';
     const filtered=entries.filter(e=>
-      e.title.toLowerCase().includes(filter.toLowerCase())||
-      e.content.toLowerCase().includes(filter.toLowerCase()));
+      (e.title||'').toLowerCase().includes(filter.toLowerCase())||
+      (e.content||'').toLowerCase().includes(filter.toLowerCase()));
     if(filtered.length===0)list.innerHTML='<div class="empty-state">NENHUMA ENTRADA</div>';
     else filtered.forEach(e=>{
       const card=document.createElement('div'); card.className='entry-card';
       card.innerHTML=`<div class="entry-body">
-          <div class="entry-title">${e.title}</div>
-          <div class="entry-meta">ID: ${e.id} | AUTOR: ${e.author} | DATA: ${e.date}</div>
-          <div class="entry-preview">${e.content.substring(0,120)}${e.content.length>120?'…':''}</div>
+          <div class="entry-title">${e.title||''}</div>
+          <div class="entry-meta">ID: ${e.id} | AUTOR: ${e.author||'—'} | DATA: ${e.date||'—'}</div>
+          <div class="entry-preview">${(e.content||'').substring(0,120)}${(e.content||'').length>120?'…':''}</div>
         </div>
         <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px">
           <span class="entry-level-badge lvl-${e.level}">NÍV.${e.level}</span>
@@ -1438,11 +1613,12 @@ function renderEntries(area,section){
   }
   render();
 }
-function openViewEntry(section,id){
-  const e=(DB.entries[section]||[]).find(x=>x.id===id);if(!e)return;
-  openModal(e.id+' — '+e.title,`
+
+async function openViewEntry(section,id){
+  const e=await fbGet(doc(db,'entries',section,'docs',id)); if(!e)return;
+  openModal(`${e.id} — ${e.title}`,`
     <div style="font-size:10px;letter-spacing:1px;color:var(--txt-dim);margin-bottom:12px">
-      AUTOR: ${e.author} | DATA: ${e.date} | NÍVEL: ${e.level}</div>
+      AUTOR: ${e.author||'—'} | DATA: ${e.date||'—'} | NÍVEL: ${e.level}</div>
     <div style="background:var(--panel);border:1px solid var(--border);padding:14px;
       font-size:12px;letter-spacing:1px;color:var(--txt);line-height:1.7">${e.content}</div>`,
   '<button class="btn-red btn-sm" onclick="closeModal()">FECHAR</button>');
@@ -1459,22 +1635,25 @@ function openCreateEntry(section){
   `<button class="btn-red btn-sm" onclick="submitCreateEntry('${section}')">CRIAR</button>
    <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
 }
-function submitCreateEntry(section){
+async function submitCreateEntry(section){
   const title=document.getElementById('f-title').value.trim();
-  const level=parseInt(document.getElementById('f-level').value)||1;
   const content=document.getElementById('f-content').value.trim();
-  const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   if(!title||!content){alert('Preencha título e conteúdo.');return;}
+  const level=parseInt(document.getElementById('f-level').value)||1;
+  const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
   const prefix={arquivos:'A',relatorios:'R',intel:'I',dossies:'D',opsNegras:'ON',controle:'C'}[section]||'X';
-  const id=prefix+Date.now().toString().slice(-4);
-  if(!DB.entries[section])DB.entries[section]=[];
-  DB.entries[section].push({id,title:title.toUpperCase(),level,author:currentUser.id,
-    date:new Date().toISOString().split('T')[0],tags,content});
-  addLog(currentUser.id,`Criou entrada ${id}`,'ok');
-  closeModal(); navigate(section);
+  const id=prefix+Date.now().toString().slice(-5);
+  // Author: SYSTEM for admin, otherwise user ID
+  const author=isAdmin()?'SYSTEM':currentUser.id;
+  const entry={id,title:title.toUpperCase(),level,author,
+    date:new Date().toISOString().split('T')[0],tags,content,
+    createdAt:serverTimestamp()};
+  await setDoc(doc(db,'entries',section,'docs',id),entry);
+  await addLog(currentUser.id,`Criou entrada ${id} em ${section}`,'ok');
+  closeModal(); renderEntries(document.getElementById('content-area'),section);
 }
-function openEditEntry(section,id){
-  const e=(DB.entries[section]||[]).find(x=>x.id===id);if(!e)return;
+async function openEditEntry(section,id){
+  const e=await fbGet(doc(db,'entries',section,'docs',id)); if(!e)return;
   openModal(`EDITAR — ${e.id}`,`
     <div class="form-row"><label class="form-label">TÍTULO</label><input class="form-input" id="f-title" value="${e.title}"></div>
     <div class="form-row-2">
@@ -1486,48 +1665,211 @@ function openEditEntry(section,id){
   `<button class="btn-red btn-sm" onclick="submitEditEntry('${section}','${id}')">SALVAR</button>
    <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
 }
-function submitEditEntry(section,id){
-  const e=(DB.entries[section]||[]).find(x=>x.id===id);if(!e)return;
-  e.title=(document.getElementById('f-title').value.trim()||e.title).toUpperCase();
-  e.level=parseInt(document.getElementById('f-level').value)||e.level;
-  e.content=document.getElementById('f-content').value.trim()||e.content;
-  e.tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  addLog(currentUser.id,`Editou entrada ${id}`,'ok');
-  closeModal(); navigate(section);
+async function submitEditEntry(section,id){
+  const title=(document.getElementById('f-title').value.trim()||'').toUpperCase();
+  const level=parseInt(document.getElementById('f-level').value)||1;
+  const content=document.getElementById('f-content').value.trim();
+  const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
+  await updateDoc(doc(db,'entries',section,'docs',id),{title,level,content,tags});
+  await addLog(currentUser.id,`Editou entrada ${id}`,'ok');
+  closeModal(); renderEntries(document.getElementById('content-area'),section);
 }
-function deleteEntry(section,id){
+async function deleteEntry(section,id){
   if(!confirm(`Excluir ${id}?`))return;
-  DB.entries[section]=(DB.entries[section]||[]).filter(e=>e.id!==id);
-  addLog(currentUser.id,`Excluiu ${id}`,'warn');
-  navigate(section);
+  await fbDel(doc(db,'entries',section,'docs',id));
+  await addLog(currentUser.id,`Excluiu ${id}`,'warn');
+  renderEntries(document.getElementById('content-area'),section);
 }
 
-// ═══ CONTROLE ═══
-function renderControle(area){
+// ═══════════════════════════════════════════════════════════════
+//  CHAT (realtime Firestore)
+// ═══════════════════════════════════════════════════════════════
+// Room IDs:
+//   global           → chat geral (read all, write lvl5+admin)
+//   team_SCARLET     → chat equipe Scarlet
+//   team_IVORY       → chat equipe Ivory
+//   dm_AABB          → chat privado entre A e B (sorted IDs joined)
+
+function dmRoomId(a,b){return 'dm_'+[a,b].sort().join('_');}
+function teamRoomId(team){return 'team_'+team;}
+function canSendGlobal(){return isAdmin()||(currentUser&&currentUser.level>=5);}
+
+let _currentRoom=null;
+
+function renderChat(area){
+  const u=currentUser;
+  const users=_allUsers.filter(x=>!x.isAdmin&&x.id!==u.id);
+
+  area.style.display='block'; area.style.overflowY='hidden'; area.style.padding='0';
+  area.innerHTML=`
+    <div class="chat-layout" style="height:calc(100vh - 44px - 40px)">
+      <div class="chat-rooms">
+        <div class="chat-rooms-title">CANAIS</div>
+        <div class="chat-room-item" id="room-global" onclick="openChatRoom('global')">
+          <div class="chat-room-name">◈ GLOBAL</div>
+          <div class="chat-room-sub">Anúncios gerais</div>
+        </div>
+        <div class="chat-room-item" id="room-team" onclick="openChatRoom('${teamRoomId(u.team)}')">
+          <div class="chat-room-name">◉ EQUIPE ${u.team||''}</div>
+          <div class="chat-room-sub">Sua equipe</div>
+        </div>
+        <div class="chat-rooms-title" style="margin-top:8px">DIRETO</div>
+        ${users.map(x=>`
+          <div class="chat-room-item" id="room-dm-${x.id}" onclick="openChatRoom('${dmRoomId(u.id,x.id)}','${x.id}')">
+            <div class="chat-room-name">${x.id}</div>
+            <div class="chat-room-sub">${x.name}</div>
+          </div>`).join('')}
+      </div>
+      <div class="chat-main" id="chat-main">
+        <div style="display:flex;align-items:center;justify-content:center;height:100%;color:var(--txt-dim);font-size:12px;letter-spacing:2px">
+          SELECIONE UM CANAL
+        </div>
+      </div>
+    </div>`;
+  openChatRoom('global');
+}
+
+function openChatRoom(roomId,otherUserId){
+  if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
+  _currentRoom=roomId;
+  document.querySelectorAll('.chat-room-item').forEach(el=>el.classList.remove('active'));
+  const activeEl=document.getElementById('room-global')||null;
+  // highlight correct room
+  if(roomId==='global'&&document.getElementById('room-global'))
+    document.getElementById('room-global').classList.add('active');
+  else if(roomId.startsWith('team_')&&document.getElementById('room-team'))
+    document.getElementById('room-team').classList.add('active');
+  else if(otherUserId&&document.getElementById(`room-dm-${otherUserId}`))
+    document.getElementById(`room-dm-${otherUserId}`).classList.add('active');
+
+  const isGlobal=roomId==='global';
+  const isTeam=roomId.startsWith('team_');
+  const isDM=roomId.startsWith('dm_');
+  const canWrite=isGlobal?canSendGlobal():true;
+
+  let roomLabel=roomId;
+  if(isGlobal)roomLabel='CANAL GLOBAL';
+  else if(isTeam)roomLabel='EQUIPE '+roomId.replace('team_','');
+  else if(isDM&&otherUserId){
+    const other=_allUsers.find(u=>u.id===otherUserId);
+    roomLabel=`MSG PRIVADA — ${otherUserId}${other?' ('+other.name+')':''}`;
+  }
+
+  const main=document.getElementById('chat-main'); if(!main)return;
+  main.innerHTML=`
+    <div class="chat-header">
+      <span>${roomLabel}</span>
+      ${isGlobal&&!canSendGlobal()?'<span style="font-size:9px;letter-spacing:2px;color:var(--txt-dim)">SOMENTE LEITURA</span>':''}
+    </div>
+    <div class="chat-messages" id="chat-msgs"></div>
+    ${canWrite?`
+    <div class="chat-input-row">
+      <textarea class="chat-input" id="chat-input" rows="1" placeholder="MENSAGEM..."
+        onkeydown="chatKeydown(event,'${roomId}')"></textarea>
+      <button class="chat-send" onclick="sendChatMsg('${roomId}')">ENVIAR</button>
+    </div>`:`
+    <div class="chat-locked">⊘ APENAS AGENTES NÍV.5 E ADMIN PODEM ESCREVER NO CANAL GLOBAL</div>`}`;
+
+  // real-time listener
+  const q=query(COL.chat(roomId),orderBy('ts','asc'),limit(100));
+  _chatUnsub=onSnapshot(q,snap=>{
+    const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderChatMessages(msgs,roomId);
+  });
+}
+
+function renderChatMessages(msgs,roomId){
+  const container=document.getElementById('chat-msgs'); if(!container)return;
+  let html='';
+  let lastDay='';
+  msgs.forEach(m=>{
+    const ts=m.ts?.toDate?.()||new Date(m.clientTs||Date.now());
+    const day=ts.toLocaleDateString('pt-BR');
+    const time=ts.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    if(day!==lastDay){
+      html+=`<div class="chat-date-sep">${day}</div>`;
+      lastDay=day;
+    }
+    if(m.system){
+      html+=`<div class="chat-sys-msg">${m.text}</div>`;
+      return;
+    }
+    const own=m.senderId===currentUser.id;
+    const canDel=isAdmin()||m.senderId===currentUser.id;
+    html+=`<div class="chat-msg ${own?'own':'other'}" data-id="${m.id}">
+      <div class="chat-msg-meta">
+        ${!own?`<span style="color:var(--ac-b)">${m.senderId}</span>`:''}
+        <span>${time}</span>
+        ${canDel?`<button class="chat-msg-del" onclick="deleteChatMsg('${roomId}','${m.id}')">✕</button>`:''}
+      </div>
+      <div class="chat-msg-bubble">${escHtml(m.text)}</div>
+    </div>`;
+  });
+  container.innerHTML=html||'<div style="color:var(--txt-dim);font-size:11px;letter-spacing:2px;text-align:center;padding:20px">SEM MENSAGENS</div>';
+  container.scrollTop=container.scrollHeight;
+}
+
+function escHtml(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+
+async function sendChatMsg(roomId){
+  const input=document.getElementById('chat-input'); if(!input)return;
+  const text=input.value.trim(); if(!text)return;
+  input.value='';
+  const msg={
+    text, senderId:currentUser.id, senderName:currentUser.name,
+    ts:serverTimestamp(), clientTs:Date.now()
+  };
+  await fbAdd(COL.chat(roomId),msg);
+}
+
+function chatKeydown(e,roomId){
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMsg(roomId);}
+}
+
+async function deleteChatMsg(roomId,msgId){
+  if(!confirm('Excluir mensagem?'))return;
+  await fbDel(doc(db,'chat',roomId,'messages',msgId));
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  CONTROLE CENTRAL
+// ═══════════════════════════════════════════════════════════════
+async function renderControle(area){
+  area.innerHTML='<div class="empty-state">CARREGANDO...</div>';
+  const logs=await loadLogs(todayKey());
   area.innerHTML=`
     <div><div class="sec-title">CONTROLE CENTRAL</div>
       <div class="cards-row" style="grid-template-columns:repeat(3,1fr)">
         <div class="stat-card"><div class="sc-label">USUÁRIOS</div>
-          <div class="sc-value">${DB.users.filter(u=>!u.isAdmin).length}</div></div>
-        <div class="stat-card"><div class="sc-label">ENTRADAS</div>
-          <div class="sc-value">${Object.values(DB.entries).flat().length}</div></div>
-        <div class="stat-card"><div class="sc-label">LOGS</div>
-          <div class="sc-value">${DB.accessLog.length}</div></div>
+          <div class="sc-value">${_allUsers.filter(u=>!u.isAdmin).length}</div></div>
+        <div class="stat-card"><div class="sc-label">LOGS HOJE</div>
+          <div class="sc-value">${logs.length}</div></div>
+        <div class="stat-card"><div class="sc-label">SISTEMA</div>
+          <div class="sc-value" style="font-size:12px;padding-top:6px">ONLINE</div></div>
       </div></div>
-    <div><div class="sec-title">LOG RECENTE</div>
+    <div><div class="sec-title">LOG DE HOJE</div>
       <div class="full-log">
-        ${DB.accessLog.slice(0,20).map(l=>`
+        ${logs.slice(0,20).map(l=>`
           <div class="full-log-entry">
-            <span style="min-width:130px;color:var(--txt-dim)">${l.time}</span>
-            <span style="min-width:100px;color:var(--txt-dim)">${l.user}</span>
-            <span class="log-${l.type}">${l.action}</span>
+            <span style="min-width:130px;color:var(--txt-dim)">${l.time||''}</span>
+            <span style="min-width:100px;color:var(--txt-dim)">${l.user||''}</span>
+            <span class="log-${l.type||'ok'}">${l.action||''}</span>
           </div>`).join('')}
       </div></div>`;
 }
 
-// ═══ ADMIN PANEL ═══
-function renderAdminPanel(area){
-  const regular=DB.users.filter(u=>!u.isAdmin);
+// ═══════════════════════════════════════════════════════════════
+//  ADMIN PANEL
+// ═══════════════════════════════════════════════════════════════
+async function renderAdminPanel(area){
+  area.innerHTML='<div class="empty-state">CARREGANDO...</div>';
+  _allUsers=await fbList(COL.users());
+  const regular=_allUsers.filter(u=>!u.isAdmin);
+  const days=await getLogDays();
+  const todayLogs=await loadLogs(todayKey());
+
   area.innerHTML=`
     <div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px">
@@ -1541,7 +1883,7 @@ function renderAdminPanel(area){
             ${regular.map(u=>`<tr>
               <td>${u.id}</td><td>${u.name}</td><td>${u.role}</td>
               <td><span class="team-pill" style="margin-top:0">${u.team||'—'}</span></td>
-              <td><span class="access-pill ${LEVEL_CLASSES[u.level]}">${LEVEL_LABELS[u.level]}</span></td>
+              <td><span class="access-pill ${LEVEL_CLASSES[u.level]||'lvl-1'}">${LEVEL_LABELS[u.level]||''}</span></td>
               <td><button class="btn-red btn-sm" onclick="adminViewSheet('${u.id}');navigate('agente')">VER FICHA</button></td>
               <td style="display:flex;gap:6px">
                 <button class="btn-red btn-sm" onclick="openEditUser('${u.id}')">EDITAR</button>
@@ -1552,22 +1894,42 @@ function renderAdminPanel(area){
       </div>
     </div>
     <div>
-      <div class="sec-title">LOG COMPLETO</div>
-      <div class="full-log">
-        ${DB.accessLog.slice(0,50).map(l=>`
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
+        <div class="sec-title" style="margin-bottom:0;flex:1">LOGS — TODAS AS SESSÕES</div>
+        <select class="form-select" id="log-day-sel" style="width:180px"
+          onchange="loadAdminLogs(this.value)">
+          ${days.map(d=>`<option value="${d}" ${d===todayKey()?'selected':''}>${d}</option>`).join('')}
+        </select>
+      </div>
+      <div class="full-log" id="admin-log-list">
+        ${todayLogs.map(l=>`
           <div class="full-log-entry">
-            <span style="min-width:130px;color:rgba(150,60,60,.6)">${l.time}</span>
-            <span style="min-width:100px;color:rgba(180,80,80,.6)">${l.user}</span>
-            <span class="log-${l.type}">${l.action}</span>
+            <span style="min-width:130px;color:var(--txt-dim)">${l.time||''}</span>
+            <span style="min-width:100px;color:var(--txt-dim)">${l.user||''}</span>
+            <span class="log-${l.type||'ok'}">${l.action||''}</span>
           </div>`).join('')}
       </div>
     </div>`;
 }
+
+async function loadAdminLogs(day){
+  const list=document.getElementById('admin-log-list'); if(!list)return;
+  list.innerHTML='<div class="empty-state">CARREGANDO...</div>';
+  const logs=await loadLogs(day);
+  list.innerHTML=logs.map(l=>`
+    <div class="full-log-entry">
+      <span style="min-width:130px;color:var(--txt-dim)">${l.time||''}</span>
+      <span style="min-width:100px;color:var(--txt-dim)">${l.user||''}</span>
+      <span class="log-${l.type||'ok'}">${l.action||''}</span>
+    </div>`).join('')||'<div class="empty-state">NENHUM LOG NESTE DIA</div>';
+}
+
+// ── User CRUD ──
 function openCreateUser(){
   openModal('CRIAR USUÁRIO',`
     <div class="form-row-2">
       <div class="form-row"><label class="form-label">ID</label><input class="form-input" id="u-id" placeholder="EX: THETA-03"></div>
-      <div class="form-row"><label class="form-label">CÓDIGO</label><input class="form-input" id="u-code" placeholder="Senha"></div>
+      <div class="form-row"><label class="form-label">CÓDIGO (senha)</label><input class="form-input" id="u-code" placeholder="Senha"></div>
     </div>
     <div class="form-row-2">
       <div class="form-row"><label class="form-label">NOME</label><input class="form-input" id="u-name" placeholder="Nome"></div>
@@ -1587,22 +1949,25 @@ function openCreateUser(){
   `<button class="btn-red btn-sm" onclick="submitCreateUser()">CRIAR</button>
    <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
 }
-function submitCreateUser(){
-  const id=document.getElementById('u-id').value.trim().toUpperCase();
-  const code=document.getElementById('u-code').value.trim();
-  const name=document.getElementById('u-name').value.trim();
-  const role=document.getElementById('u-role').value.trim().toUpperCase();
+async function submitCreateUser(){
+  const id   =document.getElementById('u-id').value.trim().toUpperCase();
+  const code =document.getElementById('u-code').value.trim();
+  const name =document.getElementById('u-name').value.trim();
+  const role =document.getElementById('u-role').value.trim().toUpperCase();
   const level=parseInt(document.getElementById('u-level').value)||1;
-  const team=document.getElementById('u-team').value||'SCARLET';
+  const team =document.getElementById('u-team').value||'SCARLET';
   if(!id||!code||!name||!role){alert('Preencha todos os campos.');return;}
-  if(DB.users.find(u=>u.id===id)){alert('ID já existe.');return;}
-  DB.users.push({id,code,name,role,level,team});
-  DB.sheets[id]=mkSheet(id);
-  addLog(currentUser.id,`Criou usuário ${id} [${team}]`,'ok');
-  closeModal(); navigate('adminPanel');
+  const existing=await fbGet(doc(db,'users',id));
+  if(existing){alert('ID já existe.');return;}
+  await setDoc(doc(db,'users',id),{id,code,name,role,level,team});
+  await fbSet(COL.sheets(id),mkSheet(id));
+  await addLog(currentUser.id,`Criou usuário ${id} [${team}]`,'ok');
+  closeModal();
+  _allUsers=await fbList(COL.users());
+  navigate('adminPanel');
 }
 function openEditUser(uid){
-  const u=DB.users.find(x=>x.id===uid);if(!u)return;
+  const u=_allUsers.find(x=>x.id===uid); if(!u)return;
   openModal(`EDITAR — ${u.id}`,`
     <div class="form-row-2">
       <div class="form-row"><label class="form-label">NOME</label><input class="form-input" id="u-name" value="${u.name}"></div>
@@ -1613,7 +1978,7 @@ function openEditUser(uid){
       <div class="form-row"><label class="form-label">EQUIPE</label>
         <select class="form-select" id="u-team">
           <option value="SCARLET" ${(u.team||'SCARLET')==='SCARLET'?'selected':''}>SCARLET</option>
-          <option value="IVORY" ${u.team==='IVORY'?'selected':''}>IVORY</option>
+          <option value="IVORY"   ${u.team==='IVORY'?'selected':''}>IVORY</option>
         </select></div>
     </div>
     <div class="form-row"><label class="form-label">NÍVEL</label>
@@ -1623,35 +1988,29 @@ function openEditUser(uid){
   `<button class="btn-red btn-sm" onclick="submitEditUser('${uid}')">SALVAR</button>
    <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
 }
-function submitEditUser(uid){
-  const u=DB.users.find(x=>x.id===uid);if(!u)return;
-  u.name=document.getElementById('u-name').value.trim()||u.name;
-  u.role=document.getElementById('u-role').value.trim().toUpperCase()||u.role;
-  u.level=parseInt(document.getElementById('u-level').value)||u.level;
-  u.team=document.getElementById('u-team').value||u.team;
-  const nc=document.getElementById('u-code').value.trim();if(nc)u.code=nc;
-  addLog(currentUser.id,`Editou usuário ${uid}`,'ok');
-  closeModal(); navigate('adminPanel');
+async function submitEditUser(uid){
+  const updates={
+    name: document.getElementById('u-name').value.trim(),
+    role: document.getElementById('u-role').value.trim().toUpperCase(),
+    level:parseInt(document.getElementById('u-level').value)||1,
+    team: document.getElementById('u-team').value,
+  };
+  const nc=document.getElementById('u-code').value.trim();
+  if(nc)updates.code=nc;
+  await updateDoc(doc(db,'users',uid),updates);
+  await addLog(currentUser.id,`Editou usuário ${uid}`,'ok');
+  closeModal();
+  _allUsers=await fbList(COL.users());
+  navigate('adminPanel');
 }
-function deleteUser(uid){
+async function deleteUser(uid){
   if(!confirm(`Excluir usuário ${uid}?`))return;
-  DB.users=DB.users.filter(u=>u.id!==uid);
-  delete DB.sheets[uid];
-  addLog(currentUser.id,`Excluiu usuário ${uid}`,'warn');
+  await fbDel(doc(db,'users',uid));
+  await addLog(currentUser.id,`Excluiu usuário ${uid}`,'warn');
+  _allUsers=await fbList(COL.users());
   navigate('adminPanel');
 }
 
-// ═══ MODAL ═══
-function openModal(title,body,footer=''){
-  document.getElementById('modal-title').textContent=title;
-  document.getElementById('modal-body').innerHTML=body;
-  document.getElementById('modal-footer').innerHTML=footer;
-  document.getElementById('modal-bg').classList.add('open');
-}
-function closeModal(){document.getElementById('modal-bg').classList.remove('open');}
-document.getElementById('modal-bg').addEventListener('click',e=>{
-  if(e.target===document.getElementById('modal-bg'))closeModal();
-});
 </script>
 </body>
 </html>
