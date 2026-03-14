@@ -507,14 +507,16 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
   font-size:10px;padding:0 2px;opacity:0;transition:opacity .1s;}
 .chat-msg:hover .chat-msg-del{opacity:1;}
 .chat-msg-del:hover{color:#ff4444;}
-.chat-input-row{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border);}
-.chat-input{flex:1;background:var(--input-bg);border:1px solid var(--input-border);
+.chat-input-row{display:flex;align-items:flex-end;gap:0;padding:0;border-top:1px solid var(--border);}
+.chat-input{flex:1;background:var(--input-bg);border:none;border-right:1px solid var(--border);
   color:var(--txt-b);font-family:'Share Tech Mono',monospace;font-size:12px;
-  letter-spacing:1px;padding:6px 10px;outline:none;resize:none;min-height:32px;max-height:72px;}
-.chat-input:focus{border-color:var(--ac);}
-.chat-send{background:transparent;border:1px solid var(--ac);color:var(--ac-b);
-  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
-  padding:6px 12px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  letter-spacing:1px;padding:10px 14px;outline:none;resize:none;
+  min-height:42px;max-height:100px;line-height:1.5;}
+.chat-input:focus{background:var(--panel2);}
+.chat-send{background:transparent;border:none;border-left:1px solid var(--border);color:var(--ac-b);
+  font-family:'Share Tech Mono',monospace;font-size:13px;letter-spacing:1px;
+  padding:0 18px;cursor:pointer;transition:all .15s;white-space:nowrap;
+  min-height:42px;align-self:stretch;}
 .chat-send:hover{background:var(--ac);color:#000;}
 .chat-send:disabled{opacity:.35;cursor:not-allowed;}
 .chat-locked{display:flex;align-items:center;justify-content:center;
@@ -545,6 +547,44 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
 .notif-sender{font-size:10px;letter-spacing:2px;color:var(--ac-b);margin-bottom:2px;}
 .notif-preview{font-size:10px;letter-spacing:.5px;color:var(--txt-dim);
   white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;}
+/* ═══ DARK OPS MISSIONS ═══ */
+.mission-card{border:1px solid var(--border);background:var(--entry-bg);padding:14px 16px;
+  margin-bottom:8px;transition:border-color .12s;}
+.mission-card:hover{border-color:var(--border2);}
+.mission-card.status-agendada{border-left:3px solid #4488ff;}
+.mission-card.status-ativa{border-left:3px solid #ffaa00;animation:missionPulse 2s ease-in-out infinite;}
+.mission-card.status-concluida{border-left:3px solid #44ff88;opacity:.8;}
+.mission-card.status-falhou{border-left:3px solid #ff4444;opacity:.7;}
+@keyframes missionPulse{0%,100%{box-shadow:0 0 0 rgba(255,170,0,0)}50%{box-shadow:0 0 8px rgba(255,170,0,.3)}}
+.mission-header{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:8px;}
+.mission-title{font-size:13px;letter-spacing:2px;color:var(--txt-b);font-weight:bold;}
+.mission-status-badge{font-size:9px;letter-spacing:2px;padding:3px 9px;border:1px solid;
+  font-family:'Orbitron',sans-serif;white-space:nowrap;flex-shrink:0;}
+.status-badge-agendada{color:#4488ff;border-color:#4488ff;}
+.status-badge-ativa{color:#ffaa00;border-color:#ffaa00;}
+.status-badge-concluida{color:#44ff88;border-color:#44ff88;}
+.status-badge-falhou{color:#ff4444;border-color:#ff4444;}
+.mission-meta{font-size:10px;letter-spacing:1px;color:var(--txt-dim);margin-bottom:6px;display:flex;gap:14px;flex-wrap:wrap;}
+.mission-teams{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;}
+.mission-team-tag{font-size:9px;letter-spacing:2px;padding:2px 8px;border:1px solid;
+  font-family:'Orbitron',sans-serif;}
+.mission-desc{font-size:11px;letter-spacing:.5px;color:var(--txt);line-height:1.6;margin-bottom:8px;}
+.mission-actions{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px;}
+.mission-schedule{display:flex;gap:8px;flex-wrap:wrap;font-size:10px;letter-spacing:1px;color:var(--txt-dim);}
+.mission-schedule span{display:flex;align-items:center;gap:4px;}
+.mission-conclusion{margin-top:10px;padding:10px;border:1px solid var(--border);background:var(--panel);
+  font-size:11px;letter-spacing:.5px;line-height:1.6;}
+.mission-conclusion-title{font-size:10px;letter-spacing:3px;color:var(--ac);margin-bottom:6px;
+  font-family:'Orbitron',sans-serif;}
+.btn-mission-start{background:transparent;border:1px solid #ffaa00;color:#ffaa00;
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;
+  padding:5px 12px;cursor:pointer;transition:all .15s;}
+.btn-mission-start:hover{background:#ffaa00;color:#000;}
+.btn-mission-end{background:transparent;border:1px solid #44ff88;color:#44ff88;
+  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;
+  padding:5px 12px;cursor:pointer;transition:all .15s;}
+.btn-mission-end:hover{background:#44ff88;color:#000;}
+.mission-datetime-inputs{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
 </style>
 </head>
 <body>
@@ -660,13 +700,7 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
           <div class="chat-room-sub">Anúncios gerais</div>
           <span class="chat-unread-count" id="unread-global">0</span>
         </div>
-        <div class="chat-room-item" id="croom-team" onclick="openChatRoom('_TEAM_')">
-          <div class="chat-room-name" id="team-room-label">◉ EQUIPE</div>
-          <div class="chat-room-sub">Sua equipe</div>
-          <span class="chat-unread-count" id="unread-team">0</span>
-        </div>
-        <div class="chat-section-label">DIRETO</div>
-        <div id="chat-dm-list" style="overflow-y:auto;"></div>
+        <!-- team rooms + DMs injected by _initChatPanel() -->
       </div>
     </div>
     <div class="chat-main" id="chat-main">
@@ -918,16 +952,18 @@ const CREATE_PERMS = {
   intel:      5,
 };
 
+// Section restrictions: {section: {minLevel, teams: ['SCARLET','IVORY'] or null=all}}
+// teams:null means all teams can access if they have the level
 const NAV_DEFS=[
-  {label:'FICHA DO AGENTE',icon:'◈',section:'agente',    minLevel:1, desc:'Sua ficha de personagem'},
-  {label:'DASHBOARD',      icon:'◫',section:'dashboard', minLevel:1, desc:'Visão geral do sistema'},
-  {label:'ARQUIVOS',       icon:'◉',section:'arquivos',  minLevel:1, desc:'Documentos de apoio e referência'},
-  {label:'RELATÓRIOS',     icon:'◎',section:'relatorios',minLevel:2, desc:'Eventos e capítulos da campanha'},
-  {label:'INTELIGÊNCIA',   icon:'◧',section:'intel',     minLevel:3, desc:'Fichas de organizações'},
-  {label:'DOSSIÊS',        icon:'✦',section:'dossies',   minLevel:3, desc:'Fichas de inimigos e alvos'},
-  {label:'DARK OPS.',      icon:'⊠',section:'opsNegras', minLevel:4, desc:'Missões e operações ativas'},
-  {label:'CONTROLE',       icon:'⊞',section:'controle',  minLevel:5, desc:'Monitoramento central'},
-  {label:'PAINEL ADMIN',   icon:'★',section:'adminPanel',minLevel:99,desc:'Administração do sistema'},
+  {label:'FICHA DO AGENTE',icon:'◈',section:'agente',    minLevel:1, teams:null, desc:'Sua ficha de personagem'},
+  {label:'DASHBOARD',      icon:'◫',section:'dashboard', minLevel:1, teams:null, desc:'Visão geral do sistema'},
+  {label:'ARQUIVOS',       icon:'◉',section:'arquivos',  minLevel:1, teams:null, desc:'Documentos de apoio e referência'},
+  {label:'RELATÓRIOS',     icon:'◎',section:'relatorios',minLevel:2, teams:null, desc:'Eventos e capítulos da campanha'},
+  {label:'INTELIGÊNCIA',   icon:'◧',section:'intel',     minLevel:3, teams:null, desc:'Fichas de organizações'},
+  {label:'DOSSIÊS',        icon:'✦',section:'dossies',   minLevel:3, teams:null, desc:'Fichas de inimigos e alvos'},
+  {label:'DARK OPS.',      icon:'⊠',section:'opsNegras', minLevel:4, teams:null, desc:'Missões e operações ativas'},
+  {label:'CONTROLE',       icon:'⊞',section:'controle',  minLevel:5, teams:null, desc:'Monitoramento central'},
+  {label:'PAINEL ADMIN',   icon:'★',section:'adminPanel',minLevel:99,teams:null, desc:'Administração do sistema'},
 ];
 const SECTION_LABELS={
   agente:'FICHA DO AGENTE',dashboard:'DASHBOARD',
@@ -1137,7 +1173,14 @@ const BOOT_SEQ=[
 function canAccess(section){
   if(!currentUser)return false;
   if(currentUser.isAdmin)return true;
-  return currentUser.level>=(SECTION_MIN[section]||99);
+  // level check
+  if(currentUser.level<(SECTION_MIN[section]||99))return false;
+  // team check from NAV_DEFS
+  const def=NAV_DEFS.find(n=>n.section===section);
+  if(def&&def.teams&&def.teams.length>0){
+    return def.teams.includes(currentUser.team||'');
+  }
+  return true;
 }
 function isAdmin(){return currentUser&&currentUser.isAdmin;}
 
@@ -1252,7 +1295,7 @@ function navigate(section){
     case 'relatorios': renderEntries(area,'relatorios'); break;
     case 'intel':      renderEntries(area,'intel');      break;
     case 'dossies':    renderEntries(area,'dossies');    break;
-    case 'opsNegras':  renderEntries(area,'opsNegras');  break;
+    case 'opsNegras':  renderOpsNegras(area);  break;
     case 'controle':   renderControle(area);   break;
     case 'adminPanel': renderAdminPanel(area); break;
   }
@@ -1998,6 +2041,27 @@ async function renderAdminPanel(area){
       </div>
     </div>
     <div>
+      <div class="sec-title">RESTRIÇÕES DE SEÇÃO POR EQUIPE</div>
+      <div style="font-size:10px;letter-spacing:1px;color:var(--txt-dim);margin-bottom:10px">
+        Deixe em branco para liberar a seção para todas as equipes. Marque apenas as equipes que podem acessar.
+      </div>
+      <div style="border:1px solid var(--border);background:var(--log-bg)">
+        <table class="users-table">
+          <thead><tr><th>SEÇÃO</th><th>NÍV. MÍNIMO</th><th>EQUIPES COM ACESSO</th><th>AÇÃO</th></tr></thead>
+          <tbody>
+            ${NAV_DEFS.filter(n=>n.section!=='adminPanel').map(n=>`<tr>
+              <td style="letter-spacing:2px">${n.label}</td>
+              <td><span class="access-pill lvl-${n.minLevel===99?5:n.minLevel}">${LEVEL_LABELS[n.minLevel]||n.minLevel}</span></td>
+              <td style="color:var(--txt-dim)">
+                ${n.teams&&n.teams.length?n.teams.map(t=>`<span class="team-pill" style="margin:0 4px 0 0">${t}</span>`).join(''):'<span style="color:rgba(80,200,110,.7)">TODAS</span>'}
+              </td>
+              <td><button class="btn-red btn-sm" onclick="openEditSectionRestriction('${n.section}')">EDITAR</button></td>
+            </tr>`).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>
+    <div>
       <div style="display:flex;align-items:center;gap:12px;margin-bottom:10px;flex-wrap:wrap">
         <div class="sec-title" style="margin-bottom:0;flex:1">LOGS — TODAS AS SESSÕES</div>
         <select class="form-select" id="log-day-sel" style="width:180px"
@@ -2115,9 +2179,292 @@ async function deleteUser(uid){
   navigate('adminPanel');
 }
 
+// ── Section restriction editor ──
+const ALL_TEAMS=['SCARLET','IVORY'];
+function openEditSectionRestriction(section){
+  const def=NAV_DEFS.find(n=>n.section===section); if(!def)return;
+  const cur=def.teams||[];
+  openModal(`RESTRIÇÃO — ${def.label}`,`
+    <div style="margin-bottom:12px;font-size:11px;letter-spacing:1px;color:var(--txt-dim)">
+      Marque as equipes que podem acessar esta seção. Sem seleção = todas as equipes.
+    </div>
+    <div style="display:flex;flex-direction:column;gap:8px">
+      ${ALL_TEAMS.map(t=>`
+        <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:12px;letter-spacing:2px;color:var(--txt)">
+          <input type="checkbox" id="team-chk-${t}" ${cur.includes(t)?'checked':''}
+            style="accent-color:var(--ac);width:14px;height:14px;">
+          <span class="team-pill" style="margin:0">${t}</span>
+        </label>`).join('')}
+    </div>
+    <div style="margin-top:12px;font-size:10px;letter-spacing:1px;color:var(--txt-dim)">
+      Nível mínimo atual: <span class="access-pill lvl-${def.minLevel===99?5:def.minLevel}" style="margin:0">${LEVEL_LABELS[def.minLevel]||def.minLevel}</span>
+      <br>Para alterar o nível mínimo, edite o código (NAV_DEFS).
+    </div>`,
+  `<button class="btn-red btn-sm" onclick="submitSectionRestriction('${section}')">SALVAR</button>
+   <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
+}
+function submitSectionRestriction(section){
+  const def=NAV_DEFS.find(n=>n.section===section); if(!def)return;
+  const checked=ALL_TEAMS.filter(t=>document.getElementById('team-chk-'+t)?.checked);
+  def.teams=checked.length>0?checked:null;
+  addLog(currentUser.id,`Editou restrição da seção ${section}: ${checked.length?checked.join(','):'TODAS'}`,'ok');
+  closeModal();
+  navigate('adminPanel');
+}
 
 // ═══════════════════════════════════════════════════════════════
-//  SOUND ENGINE  (Web Audio API — no files needed)
+//  DARK OPS — MISSION SYSTEM
+// ═══════════════════════════════════════════════════════════════
+// Missions stored in Firestore: /missions/{id}
+// Schema: {id, title, objective, level, teams:[], scheduledDate, scheduledTime,
+//          status:'agendada'|'ativa'|'concluida'|'falhou',
+//          startedAt, startedBy, endedAt, endedBy,
+//          outcome:'sucesso'|'falhou'|null,
+//          report:'', createdBy, createdAt, tags:[]}
+
+async function renderOpsNegras(area){
+  area.innerHTML='<div class="empty-state">CARREGANDO OPERAÇÕES...</div>';
+  const canStartEnd = isAdmin()||(currentUser&&currentUser.level>=5);
+  const canCreate   = isAdmin();
+  let missions=[];
+  try{
+    const snap=await db.collection('missions').orderBy('scheduledDate','desc').get();
+    missions=snap.docs.map(d=>({id:d.id,...d.data()}));
+  }catch(e){ missions=[]; }
+
+  area.innerHTML='';
+  const wrap=document.createElement('div');
+
+  // header
+  const hdr=document.createElement('div');
+  hdr.style.cssText='display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;';
+  hdr.innerHTML=`<div class="sec-title" style="margin-bottom:0;flex:1">DARK OPS — OPERAÇÕES</div>
+    ${canCreate?`<button class="btn-red" onclick="openCreateMission()">+ NOVA OPERAÇÃO</button>`:''}`;
+  wrap.appendChild(hdr);
+
+  if(missions.length===0){
+    wrap.innerHTML+='<div class="empty-state">NENHUMA OPERAÇÃO REGISTRADA</div>';
+  } else {
+    missions.forEach(m=>{
+      const card=document.createElement('div');
+      card.className=`mission-card status-${m.status||'agendada'}`;
+      const teamsHtml=(m.teams||[]).map(t=>`<span class="mission-team-tag team-${t.toLowerCase()}" style="color:var(--team-color);border-color:var(--team-color)">${t}</span>`).join('');
+      const scheduledStr=m.scheduledDate?`${m.scheduledDate}${m.scheduledTime?' às '+m.scheduledTime:''}`:'—';
+
+      let actionsHtml='';
+      if(canStartEnd&&m.status==='agendada'){
+        actionsHtml+=`<button class="btn-mission-start" onclick="startMission('${m.id}')">⚡ INICIAR MISSÃO</button>`;
+      }
+      if(canStartEnd&&m.status==='ativa'){
+        actionsHtml+=`<button class="btn-mission-end" onclick="endMission('${m.id}')">✓ CONCLUIR MISSÃO</button>`;
+      }
+      if(isAdmin()){
+        actionsHtml+=`<button class="btn-red btn-sm" onclick="openEditMission('${m.id}')">✎</button>`;
+        actionsHtml+=`<button class="btn-red btn-sm btn-danger" onclick="deleteMission('${m.id}')">✕</button>`;
+      }
+
+      let conclusionHtml='';
+      if(m.status==='concluida'||m.status==='falhou'){
+        const outcomeColor=m.outcome==='sucesso'?'#44ff88':'#ff4444';
+        conclusionHtml=`
+          <div class="mission-conclusion">
+            <div class="mission-conclusion-title">RELATÓRIO DE CONCLUSÃO</div>
+            <div style="display:flex;gap:16px;margin-bottom:6px;font-size:10px;letter-spacing:1px;">
+              <span>RESULTADO: <span style="color:${outcomeColor};font-weight:bold">${(m.outcome||'').toUpperCase()}</span></span>
+              <span style="color:var(--txt-dim)">ENCERRADA: ${m.endedAt||'—'}</span>
+              <span style="color:var(--txt-dim)">AGENTE: ${m.endedBy||'—'}</span>
+            </div>
+            <div style="color:var(--txt);line-height:1.6">${m.report||'Sem relatório final.'}</div>
+          </div>`;
+      }
+
+      card.innerHTML=`
+        <div class="mission-header">
+          <div>
+            <div class="mission-title">${m.title||'—'}</div>
+            <div class="mission-meta">
+              <span>ID: ${m.id}</span>
+              <span>CRIADO POR: ${m.createdBy||'—'}</span>
+              <span>AGENDADA: ${scheduledStr}</span>
+              ${m.startedAt?`<span style="color:#ffaa00">INICIADA: ${m.startedAt} por ${m.startedBy||'—'}</span>`:''}
+            </div>
+            <div class="mission-teams">${teamsHtml||'<span style="font-size:9px;color:var(--txt-dim)">SEM EQUIPE ATRIBUÍDA</span>'}</div>
+          </div>
+          <span class="mission-status-badge status-badge-${m.status||'agendada'}">${(m.status||'agendada').toUpperCase()}</span>
+        </div>
+        <div class="mission-desc">${m.objective||''}</div>
+        ${(m.tags||[]).length?`<div>${m.tags.map(t=>`<span class="tag">${t}</span>`).join('')}</div>`:''}
+        ${conclusionHtml}
+        ${actionsHtml?`<div class="mission-actions">${actionsHtml}</div>`:''}`;
+      wrap.appendChild(card);
+    });
+  }
+  area.appendChild(wrap);
+}
+
+function openCreateMission(){
+  const allTeams=ALL_TEAMS;
+  openModal('NOVA OPERAÇÃO',`
+    <div class="form-row"><label class="form-label">TÍTULO DA OPERAÇÃO</label>
+      <input class="form-input" id="m-title" placeholder="EX: OPERAÇÃO ECLIPSE"></div>
+    <div class="form-row"><label class="form-label">OBJETIVO / BRIEFING</label>
+      <textarea class="form-textarea" id="m-obj" style="min-height:80px" placeholder="Descreva o objetivo..."></textarea></div>
+    <div class="mission-datetime-inputs" style="margin-bottom:14px">
+      <div class="form-row"><label class="form-label">DATA AGENDADA</label>
+        <input class="form-input" id="m-date" type="date" value="${new Date().toISOString().split('T')[0]}"></div>
+      <div class="form-row"><label class="form-label">HORÁRIO</label>
+        <input class="form-input" id="m-time" type="time" value="22:00"></div>
+    </div>
+    <div class="form-row"><label class="form-label">NÍVEL DE ACESSO</label>
+      <select class="form-select" id="m-level">
+        ${[1,2,3,4,5].map(n=>`<option value="${n}" ${n===4?'selected':''}>${n} — ${LEVEL_LABELS[n]}</option>`).join('')}
+      </select></div>
+    <div class="form-row"><label class="form-label">EQUIPES ENVOLVIDAS</label>
+      <div style="display:flex;gap:12px;padding:8px 0">
+        ${allTeams.map(t=>`<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;letter-spacing:2px;color:var(--txt)">
+          <input type="checkbox" id="m-team-${t}" checked style="accent-color:var(--ac)">
+          <span class="team-pill" style="margin:0">${t}</span>
+        </label>`).join('')}
+      </div></div>
+    <div class="form-row"><label class="form-label">TAGS</label>
+      <input class="form-input" id="m-tags" placeholder="ex: prioridade-1, stealth"></div>`,
+  `<button class="btn-red btn-sm" onclick="submitCreateMission()">CRIAR OPERAÇÃO</button>
+   <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
+}
+
+async function submitCreateMission(){
+  const title=document.getElementById('m-title').value.trim().toUpperCase();
+  const objective=document.getElementById('m-obj').value.trim();
+  if(!title||!objective){alert('Preencha título e objetivo.');return;}
+  const teams=ALL_TEAMS.filter(t=>document.getElementById('m-team-'+t)?.checked);
+  const id='OP'+Date.now().toString().slice(-6);
+  const mission={
+    id, title, objective,
+    level:parseInt(document.getElementById('m-level').value)||4,
+    teams, tags:document.getElementById('m-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    scheduledDate:document.getElementById('m-date').value,
+    scheduledTime:document.getElementById('m-time').value,
+    status:'agendada', outcome:null, report:'',
+    createdBy:currentUser.id, createdAt:new Date().toISOString(),
+    startedAt:null, startedBy:null, endedAt:null, endedBy:null,
+  };
+  await db.collection('missions').doc(id).set(mission);
+  await addLog(currentUser.id,`Criou operação ${id}: ${title}`,'ok');
+  closeModal(); renderOpsNegras(document.getElementById('content-area'));
+}
+
+async function openEditMission(id){
+  const m=await fbGet(db.collection('missions').doc(id)); if(!m)return;
+  openModal(`EDITAR — ${m.id}`,`
+    <div class="form-row"><label class="form-label">TÍTULO</label>
+      <input class="form-input" id="m-title" value="${m.title||''}"></div>
+    <div class="form-row"><label class="form-label">OBJETIVO</label>
+      <textarea class="form-textarea" id="m-obj" style="min-height:80px">${m.objective||''}</textarea></div>
+    <div class="mission-datetime-inputs" style="margin-bottom:14px">
+      <div class="form-row"><label class="form-label">DATA</label>
+        <input class="form-input" id="m-date" type="date" value="${m.scheduledDate||''}"></div>
+      <div class="form-row"><label class="form-label">HORÁRIO</label>
+        <input class="form-input" id="m-time" type="time" value="${m.scheduledTime||''}"></div>
+    </div>
+    <div class="form-row"><label class="form-label">EQUIPES</label>
+      <div style="display:flex;gap:12px;padding:8px 0">
+        ${ALL_TEAMS.map(t=>`<label style="display:flex;align-items:center;gap:6px;cursor:pointer;font-size:12px;letter-spacing:2px;color:var(--txt)">
+          <input type="checkbox" id="m-team-${t}" ${(m.teams||[]).includes(t)?'checked':''} style="accent-color:var(--ac)">
+          <span class="team-pill" style="margin:0">${t}</span>
+        </label>`).join('')}
+      </div></div>
+    <div class="form-row"><label class="form-label">TAGS</label>
+      <input class="form-input" id="m-tags" value="${(m.tags||[]).join(', ')}"></div>`,
+  `<button class="btn-red btn-sm" onclick="submitEditMission('${id}')">SALVAR</button>
+   <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
+}
+async function submitEditMission(id){
+  const teams=ALL_TEAMS.filter(t=>document.getElementById('m-team-'+t)?.checked);
+  await _updateDoc(db.collection('missions').doc(id),{
+    title:document.getElementById('m-title').value.trim().toUpperCase(),
+    objective:document.getElementById('m-obj').value.trim(),
+    scheduledDate:document.getElementById('m-date').value,
+    scheduledTime:document.getElementById('m-time').value,
+    tags:document.getElementById('m-tags').value.split(',').map(t=>t.trim()).filter(Boolean),
+    teams,
+  });
+  await addLog(currentUser.id,`Editou operação ${id}`,'ok');
+  closeModal(); renderOpsNegras(document.getElementById('content-area'));
+}
+async function deleteMission(id){
+  if(!confirm(`Excluir operação ${id}?`))return;
+  await fbDel(db.collection('missions').doc(id));
+  await addLog(currentUser.id,`Excluiu operação ${id}`,'warn');
+  renderOpsNegras(document.getElementById('content-area'));
+}
+
+async function startMission(id){
+  if(!confirm('Iniciar esta missão agora? Um alerta será enviado para as equipes envolvidas.'))return;
+  const m=await fbGet(db.collection('missions').doc(id)); if(!m)return;
+  const now=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  await _updateDoc(db.collection('missions').doc(id),{
+    status:'ativa', startedAt:now, startedBy:currentUser.id,
+  });
+  // Send alert to each involved team's chat
+  const alertText=`⚡ ALERTA DE MISSÃO — ${m.title} — INICIADA AGORA por ${currentUser.id}. TODOS OS AGENTES ENVOLVIDOS: REPORTAR POSIÇÃO.`;
+  for(const team of (m.teams||[])){
+    await db.collection('chat').doc('team_'+team).collection('messages').add({
+      text:alertText, senderId:'SYSTEM', senderName:'SYSTEM',
+      ts:firebase.firestore.FieldValue.serverTimestamp(), clientTs:Date.now(), system:true,
+    });
+  }
+  await addLog(currentUser.id,`Iniciou operação ${id}: ${m.title}`,'ok');
+  snd('mention');
+  renderOpsNegras(document.getElementById('content-area'));
+}
+
+async function endMission(id){
+  const m=await fbGet(db.collection('missions').doc(id)); if(!m)return;
+  openModal('CONCLUIR MISSÃO — '+m.title,`
+    <div style="margin-bottom:14px;font-size:11px;letter-spacing:1px;color:var(--txt-dim)">
+      Selecione o resultado e escreva o relatório final desta operação.
+    </div>
+    <div class="form-row" style="display:flex;gap:12px">
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;letter-spacing:2px;color:#44ff88">
+        <input type="radio" name="outcome" value="sucesso" checked style="accent-color:#44ff88"> MISSÃO BEM-SUCEDIDA
+      </label>
+      <label style="display:flex;align-items:center;gap:8px;cursor:pointer;font-size:12px;letter-spacing:2px;color:#ff4444">
+        <input type="radio" name="outcome" value="falhou" style="accent-color:#ff4444"> MISSÃO FALHOU
+      </label>
+    </div>
+    <div class="form-row"><label class="form-label">RELATÓRIO FINAL</label>
+      <textarea class="form-textarea" id="m-report" style="min-height:120px"
+        placeholder="Descreva o que aconteceu, baixas, objetivos atingidos..."></textarea></div>`,
+  `<button class="btn-red btn-sm" onclick="submitEndMission('${id}')">REGISTRAR CONCLUSÃO</button>
+   <button class="btn-red btn-sm btn-danger" onclick="closeModal()">CANCELAR</button>`);
+}
+
+async function submitEndMission(id){
+  const outcome=document.querySelector('input[name="outcome"]:checked')?.value||'sucesso';
+  const report=document.getElementById('m-report').value.trim();
+  if(!report){alert('Escreva o relatório final.');return;}
+  const m=await fbGet(db.collection('missions').doc(id)); if(!m)return;
+  const now=new Date().toLocaleString('pt-BR',{dateStyle:'short',timeStyle:'short'});
+  await _updateDoc(db.collection('missions').doc(id),{
+    status:outcome==='sucesso'?'concluida':'falhou',
+    outcome, report, endedAt:now, endedBy:currentUser.id,
+  });
+  // Alert teams
+  const emoji=outcome==='sucesso'?'✅':'❌';
+  const alertText=`${emoji} OPERAÇÃO ${m.title} — ${outcome.toUpperCase()}. Relatório disponível no sistema.`;
+  for(const team of (m.teams||[])){
+    await db.collection('chat').doc('team_'+team).collection('messages').add({
+      text:alertText, senderId:'SYSTEM', senderName:'SYSTEM',
+      ts:firebase.firestore.FieldValue.serverTimestamp(), clientTs:Date.now(), system:true,
+    });
+  }
+  await addLog(currentUser.id,`Encerrou operação ${id}: ${outcome}`,'ok');
+  snd('ok');
+  closeModal(); renderOpsNegras(document.getElementById('content-area'));
+}
+
+
+
 // ═══════════════════════════════════════════════════════════════
 //  CHAT — FLOATING PANEL (replaces section-based render)
 // ══════════════════════════════════════════════════════════════
@@ -2148,26 +2495,41 @@ function toggleChatPanel(){
 
 function _initChatPanel(){
   if(!currentUser)return;
-  // Set team room label
-  const tl=document.getElementById('team-room-label');
-  if(tl)tl.textContent='◉ EQUIPE '+( currentUser.team||'');
-  // Update team room onclick
-  const teamRoomEl=document.getElementById('croom-team');
-  if(teamRoomEl)teamRoomEl.onclick=()=>openChatRoom('team_'+(currentUser.team||''));
-  // Build DM list
-  const dmList=document.getElementById('chat-dm-list');
-  if(dmList){
-    const others=_allUsers.filter(u=>!u.isAdmin&&u.id!==currentUser.id);
-    dmList.innerHTML=others.map(u=>{
-      const rid=_dmRoomId(currentUser.id,u.id);
-      return`<div class="chat-room-item" id="croom-dm-${u.id}" onclick="openChatRoom('${rid}','${u.id}')">
-        <div class="chat-room-name">${u.id}</div>
-        <div class="chat-room-sub">${u.name}</div>
-        <span class="chat-unread-count" id="unread-${rid}">0</span>
-      </div>`;
-    }).join('');
-  }
-  // Start background listeners for unread counts on all rooms
+  const rooms=document.getElementById('chat-panel')?.querySelector('.chat-rooms');
+  if(!rooms)return;
+
+  // Rebuild the rooms list entirely so admin gets all teams
+  const existingFixed=rooms.querySelector('#croom-global');
+  // Remove old team/dm section and rebuild
+  const oldSections=[...rooms.querySelectorAll('.chat-section-label, .chat-room-item:not(#croom-global), #chat-dm-list')];
+  oldSections.forEach(el=>el.remove());
+
+  // Team rooms: admin sees all, users see their own
+  const teamsToShow=isAdmin()?ALL_TEAMS:[currentUser.team||'SCARLET'];
+  const teamHtml=teamsToShow.map(t=>`
+    <div class="chat-room-item" id="croom-team-${t}" onclick="openChatRoom('team_${t}')">
+      <div class="chat-room-name">◉ ${t}</div>
+      <div class="chat-room-sub">Equipe ${t}</div>
+      <span class="chat-unread-count" id="unread-team_${t}">0</span>
+    </div>`).join('');
+
+  // DM list
+  const others=_allUsers.filter(u=>!u.isAdmin&&u.id!==currentUser.id);
+  const dmHtml=others.map(u=>{
+    const rid=_dmRoomId(currentUser.id,u.id);
+    return`<div class="chat-room-item" id="croom-dm-${u.id}" onclick="openChatRoom('${rid}','${u.id}')">
+      <div class="chat-room-name">${u.id}</div>
+      <div class="chat-room-sub">${u.name}</div>
+      <span class="chat-unread-count" id="unread-${rid}">0</span>
+    </div>`;
+  }).join('');
+
+  const scrollDiv=rooms.querySelector('div[style*="overflow-y"]')||rooms;
+  scrollDiv.insertAdjacentHTML('beforeend',
+    `<div class="chat-section-label">EQUIPES</div>${teamHtml}
+     <div class="chat-section-label">DIRETO</div>
+     <div id="chat-dm-list">${dmHtml}</div>`);
+
   _startUnreadListeners();
 }
 
@@ -2176,17 +2538,16 @@ const _bgUnsubs=[];
 function _startUnreadListeners(){
   _bgUnsubs.forEach(u=>u()); _bgUnsubs.length=0;
   if(!currentUser)return;
-  const rooms=['global','team_'+(currentUser.team||'')];
-  // Add all DM rooms
+  const teamsToListen=isAdmin()?ALL_TEAMS:[currentUser.team||'SCARLET'];
+  const rooms=['global',...teamsToListen.map(t=>'team_'+t)];
   _allUsers.filter(u=>!u.isAdmin&&u.id!==currentUser.id)
     .forEach(u=>rooms.push(_dmRoomId(currentUser.id,u.id)));
-  
+
   rooms.forEach(room=>{
     const q=db.collection('chat').doc(room).collection('messages')
       .orderBy('ts','desc').limit(20);
     const unsub=q.onSnapshot(snap=>{
       if(!snap||snap.empty)return;
-      // Count messages newer than last seen
       const lastSeen=_lastSeen(room);
       let count=0;
       snap.docs.forEach(d=>{
@@ -2196,17 +2557,14 @@ function _startUnreadListeners(){
       });
       _unread[room]=count;
       _refreshUnread();
-      // If panel is open and this is the active room, mark seen
       if(_chatPanelOpen&&_currentRoom===room){
         _markSeen(room);
       } else if(count>0){
-        // Show notification for latest message if panel is closed or different room
         const latest=snap.docs[0]?.data();
         if(latest&&latest.senderId!==currentUser.id&&(latest.clientTs||0)>lastSeen){
-          // Check if we should notify (mention or DM)
           const isDM=room.startsWith('dm_');
           const isMention=latest.text&&latest.text.toLowerCase().includes('@'+currentUser.id.toLowerCase());
-          if(isDM||isMention) {
+          if(isDM||isMention){
             _showNotif(latest.senderId,latest.text,room,isDM?'dm':isMention?'mention':'msg');
           }
         }
@@ -2257,9 +2615,11 @@ function openChatRoom(roomId, otherUserId){
 
   // Highlight active room
   document.querySelectorAll('.chat-room-item').forEach(el=>el.classList.remove('active'));
-  if(roomId==='global')document.getElementById('croom-global')?.classList.add('active');
-  else if(roomId.startsWith('team_'))document.getElementById('croom-team')?.classList.add('active');
-  else if(otherUserId)document.getElementById(`croom-dm-${otherUserId}`)?.classList.add('active');
+  if(roomId==='global') document.getElementById('croom-global')?.classList.add('active');
+  else if(roomId.startsWith('team_')){
+    const t=roomId.replace('team_','');
+    document.getElementById('croom-team-'+t)?.classList.add('active');
+  } else if(otherUserId) document.getElementById(`croom-dm-${otherUserId}`)?.classList.add('active');
 
   const isGlobal=roomId==='global';
   const isTeam=roomId.startsWith('team_');
