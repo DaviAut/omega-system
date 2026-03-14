@@ -131,7 +131,8 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
 .btn-access::before{content:'';position:absolute;inset:0;background:var(--ac);transform:translateX(-101%);transition:transform .15s;}
 .btn-access:hover::before{transform:translateX(0);}
 .btn-access:hover{color:#000;}
-.btn-access span{position:relative;z-index:1;}
+.btn-access:disabled{opacity:.4;cursor:not-allowed;}
+.btn-access:disabled::before{transform:none !important;}
 .login-footer{font-size:11px;letter-spacing:2px;color:var(--txt-dim);margin-top:14px;text-align:center;}
 .blink{animation:blink 1.2s step-end infinite;}
 @keyframes blink{50%{opacity:0}}
@@ -545,7 +546,7 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
         <button class="btn-access" onclick="doLogin()"><span>ACESSAR SISTEMA</span></button>
       </div>
     </div>
-    <div class="login-footer">SISTEMA ÔMEGA v4.1 &nbsp;|&nbsp; RAIDER.CORP.U &nbsp;|&nbsp; <span class="blink">●</span> ONLINE</div>
+    <div class="login-footer">SISTEMA ÔMEGA v5.0 &nbsp;|&nbsp; RAIDER.CORP.U &nbsp;|&nbsp; <span id="init-msg" class="blink">INICIALIZANDO...</span></div>
   </div>
 </div>
 
@@ -626,6 +627,97 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const db = firebase.firestore();
+
+// ── Sheet template ──
+function mkSheet(uid){
+  return {
+    info:{name:'',affiliation:'',age:'',height:'',id:uid,class:'',rank:''},
+    historic:'Insira o histórico do agente aqui.',
+    misc:'Notas adicionais, equipamentos especiais, observações.',
+    potential:{str:1,agi:1,wil:1,cha:1,rst:1,rsl:1},
+    status:{hp:10,hpMax:10,ep:10,epMax:10,
+      strength:{base:1,bonus:0},agility:{base:1,bonus:0},
+      resistance:{base:1,bonus:0},resilience:{base:1,bonus:0},
+      charisma:{base:1,bonus:0},willpower:{base:1,bonus:0}},
+    level:{current:0,exp:0,expMax:100},
+    skills:[
+      {name:'',desc:'',active:true},{name:'',desc:'',active:true},{name:'',desc:'',active:true},
+      {name:'',desc:'',active:false},{name:'',desc:'',active:false},
+      {name:'',desc:'',active:false},{name:'',desc:'',active:false},
+    ],
+    equipment:{headgear:null,'left-hand':null,'right-hand':null,
+      'upper-gear':null,'lower-gear':null,boots:null,accessory1:null,accessory2:null},
+    inventory:[]
+  };
+}
+
+
+// ═══════════════════════════════════════════════════════════════
+//  SEED — popula o banco na primeira execução
+//  Roda NO LOAD DA PÁGINA, antes de qualquer tentativa de login
+// ═══════════════════════════════════════════════════════════════
+async function runSeedAndInit(){
+  const snap = await db.collection('users').limit(1).get();
+  if(!snap.empty){ console.log('[OMEGA] Banco já populado.'); return; }
+
+  console.log('[OMEGA] Banco vazio — criando usuários iniciais...');
+  const SEED_USERS = [
+    {id:'ADMIN',    code:'omega@dm1n!', name:'Administrador ÔMEGA',  level:99, role:'ADMINISTRADOR DO SISTEMA',  team:'SCARLET', isAdmin:true},
+    {id:'RAIDER-01',code:'omega2077',   name:'Comandante SILVA',      level:5,  role:'COMANDANTE SUPREMO',        team:'SCARLET'},
+    {id:'ALPHA-07', code:'alpha007',    name:'Agente CROSS',          level:4,  role:'AGENTE SÊNIOR',             team:'SCARLET'},
+    {id:'BETA-12',  code:'beta1234',    name:'Operador RAMOS',        level:3,  role:'OPERADOR DE CAMPO',         team:'SCARLET'},
+    {id:'GAMA-03',  code:'gama999',     name:'Analista TORRES',       level:2,  role:'ANALISTA',                  team:'SCARLET'},
+    {id:'DELTA-99', code:'delta01',     name:'Recruta LIMA',          level:1,  role:'RECRUTA',                   team:'SCARLET'},
+    {id:'IVORY-01', code:'ivory2077',   name:'Agente WHITMORE',       level:3,  role:'OPERADOR DE CAMPO',         team:'IVORY'},
+  ];
+  // Write users one-by-one (batch has 500 op limit but this is safe for 7)
+  for(const u of SEED_USERS){
+    await db.collection('users').doc(u.id).set(u);
+    if(!u.isAdmin) await db.collection('sheets').doc(u.id).set(mkSheet(u.id));
+  }
+  // Seed example entries
+  const SE = {
+    arquivos:[
+      {id:'A001',title:'PROTOCOLO DE COMUNICAÇÃO INTERNA',level:1,author:'SYSTEM',date:'2077-03-01',tags:['protocolo'],content:'Diretrizes para comunicação interna entre agentes. Uso obrigatório de canais criptografados em operações de campo.'},
+      {id:'A002',title:'MANUAL DE CONDUTA DO AGENTE',level:1,author:'SYSTEM',date:'2077-02-15',tags:['manual'],content:'Código de conduta e ética operacional. Todo agente deve ler e assinar este documento antes de iniciar missões.'},
+    ],
+    relatorios:[
+      {id:'R001',title:'OP-CORVUS — CAPÍTULO 1',level:2,author:'SYSTEM',date:'2077-03-10',tags:['capitulo'],content:'Resumo dos eventos da sessão: incursão ao complexo Nordvik. Equipe confirmou presença de três alvos. Missão concluída sem baixas.'},
+    ],
+    intel:[
+      {id:'I001',title:'ORGANIZAÇÃO: SERPENTE VERMELHA',level:3,author:'SYSTEM',date:'2077-01-20',tags:['organização'],content:'Grupo paramilitar transnacional. Opera em 7 países. Estimativa de 2.000 membros ativos.'},
+    ],
+    dossies:[
+      {id:'D001',title:'INIMIGO: VICTOR CRANE',level:3,author:'SYSTEM',date:'2077-01-05',tags:['alvo'],content:'Comerciante de armas. Localização: Europa Oriental. Nível de ameaça: EXTREMO.'},
+    ],
+    opsNegras:[
+      {id:'ON001',title:'MISSÃO: OPERAÇÃO ECLIPSE',level:4,author:'SYSTEM',date:'2077-03-05',tags:['ativa'],content:'Neutralizar célula terrorista. 5 membros confirmados. Janela de execução: 72h.'},
+    ],
+  };
+  for(const [sec,arr] of Object.entries(SE)){
+    for(const e of arr) await db.collection('entries').doc(sec).collection('docs').doc(e.id).set(e);
+  }
+  console.log('[OMEGA] Seed concluído! Usuários:', SEED_USERS.map(u=>u.id).join(', '));
+}
+
+// ── Page load: seed first, then enable login ──
+window.addEventListener('load', async () => {
+  const initMsg = document.getElementById('init-msg');
+  const loginBtn = document.querySelector('.btn-access');
+  if(loginBtn) loginBtn.disabled = true;
+  if(initMsg){ initMsg.textContent = 'INICIALIZANDO...'; }
+  try {
+    await runSeedAndInit();
+    if(initMsg){ initMsg.style.animation=''; initMsg.textContent = '● ONLINE'; }
+  } catch(e) {
+    if(initMsg){ initMsg.style.animation=''; initMsg.textContent = '⚠ ERRO — veja console (F12)'; }
+    console.error('[OMEGA] ERRO DE INICIALIZAÇÃO:', e);
+    console.error('SOLUÇÃO: No console Firebase → Firestore → Rules → publique:');
+    console.error('  allow read, write: if true;');
+  } finally {
+    if(loginBtn) loginBtn.disabled = false;
+  }
+});
 
 // ── Compat-SDK helpers (mirror the modular API used throughout) ──
 function colRef(path){
@@ -756,28 +848,6 @@ const SECTION_LABELS={
 };
 const SECTION_MIN={agente:1,dashboard:1,chat:1,arquivos:1,relatorios:2,intel:3,dossies:3,opsNegras:4,controle:5,adminPanel:99};
 
-// ── Sheet template ──
-function mkSheet(uid){
-  return {
-    info:{name:'',affiliation:'',age:'',height:'',id:uid,class:'',rank:''},
-    historic:'Insira o histórico do agente aqui.',
-    misc:'Notas adicionais, equipamentos especiais, observações.',
-    potential:{str:1,agi:1,wil:1,cha:1,rst:1,rsl:1},
-    status:{hp:10,hpMax:10,ep:10,epMax:10,
-      strength:{base:1,bonus:0},agility:{base:1,bonus:0},
-      resistance:{base:1,bonus:0},resilience:{base:1,bonus:0},
-      charisma:{base:1,bonus:0},willpower:{base:1,bonus:0}},
-    level:{current:0,exp:0,expMax:100},
-    skills:[
-      {name:'',desc:'',active:true},{name:'',desc:'',active:true},{name:'',desc:'',active:true},
-      {name:'',desc:'',active:false},{name:'',desc:'',active:false},
-      {name:'',desc:'',active:false},{name:'',desc:'',active:false},
-    ],
-    equipment:{headgear:null,'left-hand':null,'right-hand':null,
-      'upper-gear':null,'lower-gear':null,boots:null,accessory1:null,accessory2:null},
-    inventory:[]
-  };
-}
 
 // ── State ──
 let currentUser=null, loginTime=null, sessionInterval=null;
@@ -960,7 +1030,6 @@ function execBootStep(step,out){
         document.getElementById('prompt-text').textContent=txt.slice(0,i++);
         const o=document.getElementById('boot-outer'); if(o)o.scrollTop=o.scrollHeight;
         if(i>txt.length){clearInterval(ti);setTimeout(async()=>{
-          await seedIfEmpty();
           _allUsers=await fbList(COL.users());
           showScreen('screen-hub'); buildHub(); startSessionTimer();
         },600);}
