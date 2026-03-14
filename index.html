@@ -433,63 +433,118 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
 .full-log-entry:hover{background:rgba(20,0,0,.5);}
 
 
-/* ═══ CHAT ═══ */
-.chat-layout{display:flex;height:100%;gap:0;}
-.chat-rooms{width:200px;min-width:200px;border-right:1px solid var(--border);
+/* ═══ CHAT FLOATING PANEL ═══ */
+/* Trigger button in topbar */
+.chat-fab{position:relative;background:transparent;border:1px solid var(--border);
+  color:var(--txt-dim);font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;
+  padding:5px 12px;cursor:pointer;transition:all .12s;display:flex;align-items:center;gap:6px;}
+.chat-fab:hover{border-color:var(--ac);color:var(--ac-b);}
+.chat-fab.active{border-color:var(--ac);color:var(--ac-b);background:var(--ac-f);}
+.chat-notif-badge{position:absolute;top:-5px;right:-5px;background:var(--ac);color:#000;
+  font-size:8px;font-family:'Orbitron',sans-serif;padding:1px 4px;
+  min-width:14px;text-align:center;display:none;}
+.chat-notif-badge.visible{display:block;}
+
+/* Floating panel */
+#chat-panel{position:fixed;bottom:0;right:0;width:760px;height:460px;
+  z-index:500;display:none;flex-direction:row;
+  background:var(--sb-bg);border:1px solid var(--ac-d);border-bottom:none;border-right:none;
+  box-shadow:-4px -4px 24px rgba(0,0,0,.6);animation:chatSlideUp .2s ease both;}
+#chat-panel.open{display:flex;}
+@keyframes chatSlideUp{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+
+/* rooms sidebar */
+.chat-rooms{width:190px;min-width:190px;border-right:1px solid var(--border);
   display:flex;flex-direction:column;background:var(--panel);}
-.chat-rooms-title{font-size:9px;letter-spacing:3px;color:var(--txt-dim);
-  padding:10px 12px 6px;border-bottom:1px solid var(--border);}
-.chat-room-item{padding:9px 12px;cursor:pointer;border-left:2px solid transparent;
-  transition:all .12s;font-size:11px;letter-spacing:1px;color:var(--nav-txt);}
-.chat-room-item:hover{background:var(--nav-hover);color:var(--ac-b);border-left-color:var(--ac);}
-.chat-room-item.active{background:var(--nav-active);color:var(--ac-b);border-left-color:var(--ac);}
-.chat-room-name{font-size:11px;letter-spacing:1px;}
-.chat-room-sub{font-size:9px;letter-spacing:1px;color:var(--txt-dim);margin-top:2px;}
-.chat-unread{display:inline-block;background:var(--ac);color:#000;font-size:8px;
-  padding:1px 5px;margin-left:6px;font-family:'Orbitron',sans-serif;}
-.chat-main{flex:1;display:flex;flex-direction:column;min-width:0;}
-.chat-header{padding:10px 16px;border-bottom:1px solid var(--border);
-  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--ac);
+.chat-rooms-header{padding:8px 12px;border-bottom:1px solid var(--border);
   display:flex;align-items:center;justify-content:space-between;}
-.chat-messages{flex:1;overflow-y:auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px;}
+.chat-rooms-title{font-size:9px;letter-spacing:3px;color:var(--txt-dim);}
+.chat-close-btn{background:none;border:none;color:var(--txt-dim);font-size:16px;
+  cursor:pointer;padding:0 4px;line-height:1;}
+.chat-close-btn:hover{color:var(--ac-b);}
+.chat-section-label{font-size:8px;letter-spacing:3px;color:var(--txt-dim);
+  padding:6px 12px 2px;margin-top:2px;}
+.chat-room-item{padding:7px 12px;cursor:pointer;border-left:2px solid transparent;
+  transition:all .12s;position:relative;}
+.chat-room-item:hover{background:var(--nav-hover);border-left-color:var(--ac);}
+.chat-room-item.active{background:var(--nav-active);border-left-color:var(--ac-b);}
+.chat-room-name{font-size:11px;letter-spacing:1px;color:var(--nav-txt);}
+.chat-room-item.active .chat-room-name,.chat-room-item:hover .chat-room-name{color:var(--ac-b);}
+.chat-room-sub{font-size:9px;letter-spacing:1px;color:var(--txt-dim);margin-top:1px;}
+.chat-unread-dot{position:absolute;right:10px;top:50%;transform:translateY(-50%);
+  width:8px;height:8px;border-radius:50%;background:var(--ac);display:none;}
+.chat-unread-dot.visible{display:block;box-shadow:0 0 6px var(--ac);}
+.chat-unread-count{position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  background:var(--ac);color:#000;font-size:8px;font-family:'Orbitron',sans-serif;
+  padding:1px 4px;min-width:14px;text-align:center;display:none;}
+.chat-unread-count.visible{display:block;}
+
+/* main chat area */
+.chat-main{flex:1;display:flex;flex-direction:column;min-width:0;}
+.chat-header{padding:8px 14px;border-bottom:1px solid var(--border);
+  font-family:'Orbitron',sans-serif;font-size:10px;letter-spacing:3px;color:var(--ac);
+  display:flex;align-items:center;justify-content:space-between;min-height:36px;}
+.chat-messages{flex:1;overflow-y:auto;padding:10px 14px;display:flex;flex-direction:column;gap:6px;}
 .chat-messages::-webkit-scrollbar{width:3px;}
 .chat-messages::-webkit-scrollbar-thumb{background:var(--ac-d);}
-.chat-msg{display:flex;flex-direction:column;gap:2px;max-width:75%;}
+.chat-msg{display:flex;flex-direction:column;gap:2px;max-width:78%;}
 .chat-msg.own{align-self:flex-end;}
 .chat-msg.other{align-self:flex-start;}
 .chat-msg-meta{font-size:9px;letter-spacing:1px;color:var(--txt-dim);
-  display:flex;gap:8px;align-items:center;}
+  display:flex;gap:6px;align-items:center;}
 .chat-msg.own .chat-msg-meta{justify-content:flex-end;}
-.chat-msg-bubble{padding:7px 12px;font-size:12px;letter-spacing:.5px;line-height:1.5;
+.chat-msg-bubble{padding:6px 10px;font-size:12px;letter-spacing:.5px;line-height:1.4;
   border:1px solid;word-break:break-word;}
 .chat-msg.own .chat-msg-bubble{background:var(--ac-f);border-color:var(--ac-d);
   color:var(--txt-b);border-radius:8px 0 8px 8px;}
 .chat-msg.other .chat-msg-bubble{background:var(--panel);border-color:var(--border);
   color:var(--txt);border-radius:0 8px 8px 8px;}
+.chat-msg.mention .chat-msg-bubble{border-color:var(--ac) !important;
+  box-shadow:0 0 8px var(--ac-d);}
+.chat-msg.mention .chat-msg-bubble::before{content:'@MENÇÃO ';font-size:8px;
+  letter-spacing:2px;color:var(--ac);display:block;margin-bottom:2px;}
 .chat-msg-del{background:none;border:none;color:var(--txt-dim);cursor:pointer;
-  font-size:11px;padding:0 3px;opacity:0;transition:opacity .1s;}
+  font-size:10px;padding:0 2px;opacity:0;transition:opacity .1s;}
 .chat-msg:hover .chat-msg-del{opacity:1;}
 .chat-msg-del:hover{color:#ff4444;}
-.chat-input-row{display:flex;gap:8px;padding:10px 14px;border-top:1px solid var(--border);}
+.chat-input-row{display:flex;gap:6px;padding:8px 12px;border-top:1px solid var(--border);}
 .chat-input{flex:1;background:var(--input-bg);border:1px solid var(--input-border);
   color:var(--txt-b);font-family:'Share Tech Mono',monospace;font-size:12px;
-  letter-spacing:1px;padding:8px 12px;outline:none;resize:none;min-height:36px;max-height:90px;}
+  letter-spacing:1px;padding:6px 10px;outline:none;resize:none;min-height:32px;max-height:72px;}
 .chat-input:focus{border-color:var(--ac);}
 .chat-send{background:transparent;border:1px solid var(--ac);color:var(--ac-b);
-  font-family:'Share Tech Mono',monospace;font-size:11px;letter-spacing:2px;
-  padding:7px 16px;cursor:pointer;transition:all .15s;white-space:nowrap;}
+  font-family:'Share Tech Mono',monospace;font-size:10px;letter-spacing:2px;
+  padding:6px 12px;cursor:pointer;transition:all .15s;white-space:nowrap;}
 .chat-send:hover{background:var(--ac);color:#000;}
 .chat-send:disabled{opacity:.35;cursor:not-allowed;}
 .chat-locked{display:flex;align-items:center;justify-content:center;
-  padding:14px;font-size:11px;letter-spacing:2px;color:var(--txt-dim);
-  border:1px dashed var(--border);margin:10px 14px;}
-.chat-date-sep{text-align:center;font-size:9px;letter-spacing:3px;
-  color:var(--txt-dim);padding:6px 0;position:relative;}
+  padding:10px;font-size:10px;letter-spacing:2px;color:var(--txt-dim);
+  border:1px dashed var(--border);margin:8px 12px;}
+.chat-date-sep{text-align:center;font-size:9px;letter-spacing:2px;
+  color:var(--txt-dim);padding:4px 0;position:relative;}
 .chat-date-sep::before,.chat-date-sep::after{content:'';position:absolute;
-  top:50%;width:40%;height:1px;background:var(--border);}
+  top:50%;width:35%;height:1px;background:var(--border);}
 .chat-date-sep::before{left:0;} .chat-date-sep::after{right:0;}
-.chat-sys-msg{text-align:center;font-size:10px;letter-spacing:1px;
-  color:var(--txt-dim);font-style:italic;padding:3px 0;}
+.chat-sys-msg{text-align:center;font-size:9px;letter-spacing:1px;
+  color:var(--txt-dim);font-style:italic;padding:2px 0;}
+.mention-dropdown{position:absolute;bottom:100%;left:0;right:0;
+  background:var(--modal-bg);border:1px solid var(--ac-d);z-index:10;
+  display:none;max-height:120px;overflow-y:auto;}
+.mention-dropdown.open{display:block;}
+.mention-opt{padding:6px 10px;cursor:pointer;font-size:11px;letter-spacing:1px;color:var(--txt);}
+.mention-opt:hover,.mention-opt.sel{background:var(--nav-active);color:var(--ac-b);}
+.chat-input-wrap{flex:1;position:relative;}
+
+/* notification toast */
+#notif-toast{position:fixed;bottom:470px;right:10px;z-index:600;
+  display:flex;flex-direction:column;gap:6px;pointer-events:none;}
+.notif-item{background:var(--modal-bg);border:1px solid var(--ac-d);border-left:3px solid var(--ac);
+  padding:8px 14px;font-size:11px;letter-spacing:1px;color:var(--txt);
+  animation:notifIn .25s ease both;max-width:280px;pointer-events:all;}
+@keyframes notifIn{from{opacity:0;transform:translateX(20px)}to{opacity:1;transform:translateX(0)}}
+.notif-sender{font-size:10px;letter-spacing:2px;color:var(--ac-b);margin-bottom:2px;}
+.notif-preview{font-size:10px;letter-spacing:.5px;color:var(--txt-dim);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:240px;}
 </style>
 </head>
 <body>
@@ -591,6 +646,38 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
       <button class="btn-logout-side" onclick="doLogout()">[ ENCERRAR SESSÃO ]</button>
     </div>
   </div>
+  <!-- FLOATING CHAT PANEL -->
+  <div id="chat-panel">
+    <div class="chat-rooms">
+      <div class="chat-rooms-header">
+        <span class="chat-rooms-title">COMM</span>
+        <button class="chat-close-btn" onclick="toggleChatPanel()">✕</button>
+      </div>
+      <div style="flex:1;overflow-y:auto;">
+        <div class="chat-section-label">CANAIS</div>
+        <div class="chat-room-item" id="croom-global" onclick="openChatRoom('global')">
+          <div class="chat-room-name">◈ GLOBAL</div>
+          <div class="chat-room-sub">Anúncios gerais</div>
+          <span class="chat-unread-count" id="unread-global">0</span>
+        </div>
+        <div class="chat-room-item" id="croom-team" onclick="openChatRoom('_TEAM_')">
+          <div class="chat-room-name" id="team-room-label">◉ EQUIPE</div>
+          <div class="chat-room-sub">Sua equipe</div>
+          <span class="chat-unread-count" id="unread-team">0</span>
+        </div>
+        <div class="chat-section-label">DIRETO</div>
+        <div id="chat-dm-list" style="overflow-y:auto;"></div>
+      </div>
+    </div>
+    <div class="chat-main" id="chat-main">
+      <div style="display:flex;align-items:center;justify-content:center;height:100%;
+        color:var(--txt-dim);font-size:11px;letter-spacing:2px">
+        SELECIONE UM CANAL
+      </div>
+    </div>
+  </div>
+  <!-- NOTIFICATION TOASTS -->
+  <div id="notif-toast"></div>
   <div class="main-area">
     <div class="topbar">
       <div class="topbar-left">
@@ -601,6 +688,9 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
       <div class="topbar-right">
         <span><span class="status-dot"></span>CONEXÃO SEGURA</span>
         <span id="topbar-time">—</span>
+        <button class="chat-fab" id="chat-fab-btn" onclick="toggleChatPanel()" title="COMUNICAÇÕES">
+          ◌ COMM <span class="chat-notif-badge" id="chat-notif-badge">0</span>
+        </button>
         <span id="topbar-user" style="color:var(--txt-dim)">—</span>
       </div>
     </div>
@@ -831,7 +921,6 @@ const CREATE_PERMS = {
 const NAV_DEFS=[
   {label:'FICHA DO AGENTE',icon:'◈',section:'agente',    minLevel:1, desc:'Sua ficha de personagem'},
   {label:'DASHBOARD',      icon:'◫',section:'dashboard', minLevel:1, desc:'Visão geral do sistema'},
-  {label:'CHAT',           icon:'◌',section:'chat',      minLevel:1, desc:'Comunicação entre agentes'},
   {label:'ARQUIVOS',       icon:'◉',section:'arquivos',  minLevel:1, desc:'Documentos de apoio e referência'},
   {label:'RELATÓRIOS',     icon:'◎',section:'relatorios',minLevel:2, desc:'Eventos e capítulos da campanha'},
   {label:'INTELIGÊNCIA',   icon:'◧',section:'intel',     minLevel:3, desc:'Fichas de organizações'},
@@ -841,12 +930,12 @@ const NAV_DEFS=[
   {label:'PAINEL ADMIN',   icon:'★',section:'adminPanel',minLevel:99,desc:'Administração do sistema'},
 ];
 const SECTION_LABELS={
-  agente:'FICHA DO AGENTE',dashboard:'DASHBOARD',chat:'CHAT — COMUNICAÇÕES',
+  agente:'FICHA DO AGENTE',dashboard:'DASHBOARD',
   arquivos:'ARQUIVOS',relatorios:'RELATÓRIOS DE CAMPANHA',
   intel:'INTELIGÊNCIA — ORGANIZAÇÕES',dossies:'DOSSIÊS — INIMIGOS',
   opsNegras:'DARK OPS. — MISSÕES',controle:'CONTROLE CENTRAL',adminPanel:'PAINEL ADMINISTRATIVO'
 };
-const SECTION_MIN={agente:1,dashboard:1,chat:1,arquivos:1,relatorios:2,intel:3,dossies:3,opsNegras:4,controle:5,adminPanel:99};
+const SECTION_MIN={agente:1,dashboard:1,arquivos:1,relatorios:2,intel:3,dossies:3,opsNegras:4,controle:5,adminPanel:99};
 
 
 // ── State ──
@@ -1077,7 +1166,6 @@ function navigate(section){
   switch(section){
     case 'agente':     renderAgentSheet(area); break;
     case 'dashboard':  renderDashboard(area);  break;
-    case 'chat':       renderChat(area);       break;
     case 'arquivos':   renderEntries(area,'arquivos');   break;
     case 'relatorios': renderEntries(area,'relatorios'); break;
     case 'intel':      renderEntries(area,'intel');      break;
@@ -1149,7 +1237,7 @@ async function renderAgentSheet(area){
     await fbSet(COL.sheets(uid),sheet);
   }
 
-  const editable=isAdmin()||currentUser.id===uid;
+  const editable=isAdmin(); // Only admin can edit sheets
   const ae=editable?'admin-editable':'';
   const viewingOther=isAdmin()&&_adminViewingUid;
   const viewedUser=viewingOther?_allUsers.find(u=>u.id===uid):null;
@@ -1511,7 +1599,7 @@ async function unequipSlot(uid,slotId){
 // ── INVENTORY ──
 function renderInventoryGrid(uid,sheet,filter){
   const grid=document.getElementById(`inv-grid-${uid}`); if(!grid)return;
-  const editable=isAdmin()||currentUser.id===uid;
+  const editable=isAdmin(); // Only admin can edit sheets
   let items=(sheet&&sheet.inventory)||[];
   if(filter) items=items.filter(i=>i.category===filter||i.rarity===filter);
   if(items.length===0){grid.innerHTML='<div class="empty-state" style="grid-column:1/-1">INVENTÁRIO VAZIO</div>';return;}
@@ -2097,6 +2185,385 @@ async function deleteUser(uid){
   navigate('adminPanel');
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+//  SOUND ENGINE  (Web Audio API — no files needed)
+// ═══════════════════════════════════════════════════════════════
+const SND = (() => {
+  let ctx = null;
+  let enabled = true;
+  function getCtx(){
+    if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==='suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, type='sine', dur=0.08, vol=0.18, attack=0.005, decay=0.05){
+    if(!enabled) return;
+    try{
+      const c=getCtx(), g=c.createGain(), o=c.createOscillator();
+      o.type=type; o.frequency.setValueAtTime(freq,c.currentTime);
+      g.gain.setValueAtTime(0,c.currentTime);
+      g.gain.linearRampToValueAtTime(vol,c.currentTime+attack);
+      g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(c.currentTime); o.stop(c.currentTime+dur+0.01);
+    }catch(e){}
+  }
+  function chord(freqs, type, dur, vol){
+    freqs.forEach((f,i) => setTimeout(()=>tone(f,type,dur,vol),i*20));
+  }
+  return {
+    // Navigation click
+    nav:    ()=>{ tone(660,'square',0.05,0.1); setTimeout(()=>tone(880,'square',0.04,0.07),40); },
+    // Modal open
+    modal:  ()=>{ tone(440,'sine',0.06,0.12); setTimeout(()=>tone(554,'sine',0.08,0.1),50); },
+    // Modal close / cancel
+    close:  ()=>{ tone(554,'sine',0.05,0.1); setTimeout(()=>tone(440,'sine',0.06,0.08),40); },
+    // Success / confirm
+    ok:     ()=>{ chord([523,659,784],'sine',0.12,0.1); },
+    // Error / denied
+    err:    ()=>{ tone(200,'sawtooth',0.15,0.14); setTimeout(()=>tone(180,'sawtooth',0.12,0.1),80); },
+    // Login success (boot start)
+    boot:   ()=>{ [220,277,330,440].forEach((f,i)=>setTimeout(()=>tone(f,'square',0.1,0.12),i*80)); },
+    // Message received
+    msg:    ()=>{ tone(880,'sine',0.04,0.08); setTimeout(()=>tone(1100,'sine',0.05,0.06),60); },
+    // Mention / notification
+    mention:()=>{ chord([660,880],'sine',0.1,0.12); setTimeout(()=>chord([880,1100],'sine',0.08,0.1),100); },
+    // Logout
+    logout: ()=>{ [440,330,220].forEach((f,i)=>setTimeout(()=>tone(f,'square',0.08,0.1),i*70)); },
+    // Typing (very subtle)
+    type:   ()=>{ tone(1200,'sine',0.02,0.04); },
+    // Toggle sound
+    toggle: ()=>{ enabled=!enabled; return enabled; },
+    isOn:   ()=>enabled,
+  };
+})();
+
+// ── Sound toggle button in topbar ──
+function buildSoundToggle(){
+  const tr=document.querySelector('.topbar-right');
+  if(!tr||document.getElementById('snd-toggle'))return;
+  const btn=document.createElement('button');
+  btn.id='snd-toggle';
+  btn.style.cssText='background:transparent;border:1px solid var(--border);color:var(--txt-dim);font-family:"Share Tech Mono",monospace;font-size:10px;letter-spacing:2px;padding:4px 8px;cursor:pointer;transition:all .12s;';
+  btn.title='Ligar/desligar sons';
+  btn.textContent='♪ ON';
+  btn.onclick=()=>{
+    const on=SND.toggle();
+    btn.textContent=on?'♪ ON':'♪ OFF';
+    btn.style.opacity=on?'1':'0.4';
+    if(on)SND.ok(); 
+  };
+  tr.insertBefore(btn,tr.firstChild);
+}
+
+// ══════════════════════════════════════════════════════════════
+//  CHAT — FLOATING PANEL (replaces section-based render)
+// ══════════════════════════════════════════════════════════════
+let _chatPanelOpen = false;
+let _currentRoom   = null;
+let _chatUnsub     = null;
+// unread counts per room  {roomId: count}
+const _unread = {};
+// last seen message timestamps per room (sessionStorage)
+function _lastSeen(room){ return parseInt(sessionStorage.getItem('ls_'+room)||'0'); }
+function _markSeen(room){ sessionStorage.setItem('ls_'+room, Date.now()); _unread[room]=0; _refreshUnread(); }
+
+function toggleChatPanel(){
+  _chatPanelOpen=!_chatPanelOpen;
+  const panel=document.getElementById('chat-panel');
+  const fab=document.getElementById('chat-fab-btn');
+  if(!panel)return;
+  panel.classList.toggle('open',_chatPanelOpen);
+  fab&&fab.classList.toggle('active',_chatPanelOpen);
+  SND.nav();
+  if(_chatPanelOpen){
+    _initChatPanel();
+    if(!_currentRoom) openChatRoom('global');
+  } else {
+    if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
+  }
+}
+
+function _initChatPanel(){
+  if(!currentUser)return;
+  // Set team room label
+  const tl=document.getElementById('team-room-label');
+  if(tl)tl.textContent='◉ EQUIPE '+( currentUser.team||'');
+  // Update team room onclick
+  const teamRoomEl=document.getElementById('croom-team');
+  if(teamRoomEl)teamRoomEl.onclick=()=>openChatRoom('team_'+(currentUser.team||''));
+  // Build DM list
+  const dmList=document.getElementById('chat-dm-list');
+  if(dmList){
+    const others=_allUsers.filter(u=>!u.isAdmin&&u.id!==currentUser.id);
+    dmList.innerHTML=others.map(u=>{
+      const rid=_dmRoomId(currentUser.id,u.id);
+      return`<div class="chat-room-item" id="croom-dm-${u.id}" onclick="openChatRoom('${rid}','${u.id}')">
+        <div class="chat-room-name">${u.id}</div>
+        <div class="chat-room-sub">${u.name}</div>
+        <span class="chat-unread-count" id="unread-${rid}">0</span>
+      </div>`;
+    }).join('');
+  }
+  // Start background listeners for unread counts on all rooms
+  _startUnreadListeners();
+}
+
+// ── Background listeners for unread counts ──
+const _bgUnsubs=[];
+function _startUnreadListeners(){
+  _bgUnsubs.forEach(u=>u()); _bgUnsubs.length=0;
+  if(!currentUser)return;
+  const rooms=['global','team_'+(currentUser.team||'')];
+  // Add all DM rooms
+  _allUsers.filter(u=>!u.isAdmin&&u.id!==currentUser.id)
+    .forEach(u=>rooms.push(_dmRoomId(currentUser.id,u.id)));
+  
+  rooms.forEach(room=>{
+    const q=db.collection('chat').doc(room).collection('messages')
+      .orderBy('ts','desc').limit(20);
+    const unsub=q.onSnapshot(snap=>{
+      if(!snap||snap.empty)return;
+      // Count messages newer than last seen
+      const lastSeen=_lastSeen(room);
+      let count=0;
+      snap.docs.forEach(d=>{
+        const data=d.data();
+        const ts=data.clientTs||0;
+        if(ts>lastSeen && data.senderId!==currentUser.id) count++;
+      });
+      _unread[room]=count;
+      _refreshUnread();
+      // If panel is open and this is the active room, mark seen
+      if(_chatPanelOpen&&_currentRoom===room){
+        _markSeen(room);
+      } else if(count>0){
+        // Show notification for latest message if panel is closed or different room
+        const latest=snap.docs[0]?.data();
+        if(latest&&latest.senderId!==currentUser.id&&(latest.clientTs||0)>lastSeen){
+          // Check if we should notify (mention or DM)
+          const isDM=room.startsWith('dm_');
+          const isMention=latest.text&&latest.text.toLowerCase().includes('@'+currentUser.id.toLowerCase());
+          if(isDM||isMention) {
+            _showNotif(latest.senderId,latest.text,room,isDM?'dm':isMention?'mention':'msg');
+          }
+        }
+      }
+    });
+    _bgUnsubs.push(unsub);
+  });
+}
+
+function _refreshUnread(){
+  let total=0;
+  Object.entries(_unread).forEach(([room,count])=>{
+    // Update per-room badge
+    const el=document.getElementById('unread-'+room);
+    if(el){el.textContent=count;el.classList.toggle('visible',count>0);}
+    total+=count;
+  });
+  // Update FAB badge
+  const badge=document.getElementById('chat-notif-badge');
+  if(badge){badge.textContent=total;badge.classList.toggle('visible',total>0);}
+}
+
+function _showNotif(senderId,text,room,type){
+  SND[type==='mention'?'mention':'msg']();
+  const toast=document.getElementById('notif-toast');
+  if(!toast)return;
+  const item=document.createElement('div');
+  item.className='notif-item';
+  const preview=(text||'').substring(0,60)+(text&&text.length>60?'...':'');
+  item.innerHTML=`<div class="notif-sender">${senderId}${type==='mention'?' — @MENÇÃO':type==='dm'?' — MSG DIRETO':''}</div>
+    <div class="notif-preview">${escHtml(preview)}</div>`;
+  item.onclick=()=>{
+    if(!_chatPanelOpen)toggleChatPanel();
+    setTimeout(()=>openChatRoom(room),100);
+    item.remove();
+  };
+  toast.appendChild(item);
+  setTimeout(()=>item.remove(),5000);
+}
+
+function _dmRoomId(a,b){return 'dm_'+[a,b].sort().join('_');}
+
+function openChatRoom(roomId, otherUserId){
+  SND.nav();
+  if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
+  _currentRoom=roomId;
+  _markSeen(roomId);
+
+  // Highlight active room
+  document.querySelectorAll('.chat-room-item').forEach(el=>el.classList.remove('active'));
+  if(roomId==='global')document.getElementById('croom-global')?.classList.add('active');
+  else if(roomId.startsWith('team_'))document.getElementById('croom-team')?.classList.add('active');
+  else if(otherUserId)document.getElementById(`croom-dm-${otherUserId}`)?.classList.add('active');
+
+  const isGlobal=roomId==='global';
+  const isTeam=roomId.startsWith('team_');
+  const isDM=roomId.startsWith('dm_');
+  const canWrite=isGlobal?(isAdmin()||(currentUser&&currentUser.level>=5)):true;
+
+  let roomLabel=roomId;
+  if(isGlobal)roomLabel='CANAL GLOBAL';
+  else if(isTeam)roomLabel='EQUIPE '+(roomId.replace('team_',''));
+  else if(isDM&&otherUserId){
+    const other=_allUsers.find(u=>u.id===otherUserId);
+    roomLabel=`DIRETO — ${otherUserId}${other?' ('+other.name+')':''}`;
+  }
+
+  const main=document.getElementById('chat-main'); if(!main)return;
+  main.innerHTML=`
+    <div class="chat-header">
+      <span>${roomLabel}</span>
+      ${isGlobal&&!canWrite?'<span style="font-size:9px;letter-spacing:2px;color:var(--txt-dim)">SOMENTE LEITURA</span>':''}
+    </div>
+    <div class="chat-messages" id="chat-msgs"></div>
+    ${canWrite?`
+    <div class="chat-input-row">
+      <div class="chat-input-wrap">
+        <div class="mention-dropdown" id="mention-dd"></div>
+        <textarea class="chat-input" id="chat-input" rows="1" placeholder="MENSAGEM... (@ID para mencionar)"
+          onkeydown="chatKeydown(event,'${roomId}')"
+          oninput="chatInputChange(this)"></textarea>
+      </div>
+      <button class="chat-send" onclick="sendChatMsg('${roomId}')">▶</button>
+    </div>`:`
+    <div class="chat-locked">⊘ APENAS NÍV.5 / ADMIN PODEM ESCREVER NO GLOBAL</div>`}`;
+
+  // realtime listener
+  const q=db.collection('chat').doc(roomId).collection('messages')
+    .orderBy('ts','asc').limit(100);
+  _chatUnsub=q.onSnapshot(snap=>{
+    if(!snap)return;
+    const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
+    renderChatMessages(msgs,roomId);
+    _markSeen(roomId);
+  });
+}
+
+// ── Mention autocomplete ──
+function chatInputChange(ta){
+  const val=ta.value;
+  const cursor=ta.selectionStart;
+  const textBefore=val.slice(0,cursor);
+  const match=textBefore.match(/@(\w*)$/);
+  const dd=document.getElementById('mention-dd');
+  if(!dd)return;
+  if(match){
+    const partial=match[1].toLowerCase();
+    const users=_allUsers.filter(u=>u.id.toLowerCase().startsWith(partial)&&u.id!==currentUser.id);
+    if(users.length){
+      dd.innerHTML=users.slice(0,5).map((u,i)=>
+        `<div class="mention-opt${i===0?' sel':''}" onclick="insertMention('${u.id}')">${u.id} — ${u.name}</div>`
+      ).join('');
+      dd.classList.add('open');
+      return;
+    }
+  }
+  dd.classList.remove('open');
+}
+function insertMention(uid){
+  const ta=document.getElementById('chat-input'); if(!ta)return;
+  const val=ta.value, cursor=ta.selectionStart;
+  const before=val.slice(0,cursor).replace(/@\w*$/,'@'+uid+' ');
+  ta.value=before+val.slice(cursor);
+  ta.focus();
+  document.getElementById('mention-dd')?.classList.remove('open');
+}
+
+function renderChatMessages(msgs,roomId){
+  const container=document.getElementById('chat-msgs'); if(!container)return;
+  let html=''; let lastDay='';
+  msgs.forEach(m=>{
+    const ts=m.ts?.toDate?.()||new Date(m.clientTs||Date.now());
+    const day=ts.toLocaleDateString('pt-BR');
+    const time=ts.toLocaleTimeString('pt-BR',{hour:'2-digit',minute:'2-digit'});
+    if(day!==lastDay){html+=`<div class="chat-date-sep">${day}</div>`;lastDay=day;}
+    if(m.system){html+=`<div class="chat-sys-msg">${escHtml(m.text)}</div>`;return;}
+    const own=m.senderId===currentUser.id;
+    const isMention=m.text&&m.text.toLowerCase().includes('@'+currentUser.id.toLowerCase());
+    const canDel=isAdmin()||m.senderId===currentUser.id;
+    html+=`<div class="chat-msg ${own?'own':'other'}${isMention?' mention':''}">
+      <div class="chat-msg-meta">
+        ${!own?`<span style="color:var(--ac-b);font-weight:bold">${m.senderId}</span>`:''}
+        <span>${time}</span>
+        ${canDel?`<button class="chat-msg-del" onclick="deleteChatMsg('${roomId}','${m.id}')">✕</button>`:''}
+      </div>
+      <div class="chat-msg-bubble">${escHtml(m.text)}</div>
+    </div>`;
+  });
+  container.innerHTML=html||'<div style="color:var(--txt-dim);font-size:11px;text-align:center;padding:20px;letter-spacing:2px">SEM MENSAGENS</div>';
+  container.scrollTop=container.scrollHeight;
+}
+
+function escHtml(s){
+  return (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/\n/g,'<br>');
+}
+async function sendChatMsg(roomId){
+  const input=document.getElementById('chat-input'); if(!input)return;
+  const text=input.value.trim(); if(!text)return;
+  input.value='';
+  document.getElementById('mention-dd')?.classList.remove('open');
+  SND.msg();
+  const msg={text,senderId:currentUser.id,senderName:currentUser.name,
+    ts:firebase.firestore.FieldValue.serverTimestamp(),clientTs:Date.now()};
+  await db.collection('chat').doc(roomId).collection('messages').add(msg);
+}
+function chatKeydown(e,roomId){
+  // Arrow keys navigate mention dropdown
+  const dd=document.getElementById('mention-dd');
+  if(dd&&dd.classList.contains('open')){
+    const opts=dd.querySelectorAll('.mention-opt');
+    const sel=[...opts].findIndex(o=>o.classList.contains('sel'));
+    if(e.key==='ArrowDown'){e.preventDefault();opts[sel]?.classList.remove('sel');opts[Math.min(sel+1,opts.length-1)]?.classList.add('sel');return;}
+    if(e.key==='ArrowUp'){e.preventDefault();opts[sel]?.classList.remove('sel');opts[Math.max(sel-1,0)]?.classList.add('sel');return;}
+    if(e.key==='Tab'||e.key==='Enter'&&dd.querySelector('.sel')){
+      e.preventDefault();
+      const uid=dd.querySelector('.sel')?.textContent.split(' ')[0];
+      if(uid)insertMention(uid); return;
+    }
+  }
+  if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChatMsg(roomId);}
+}
+async function deleteChatMsg(roomId,msgId){
+  if(!confirm('Excluir mensagem?'))return;
+  await db.collection('chat').doc(roomId).collection('messages').doc(msgId).delete();
+  SND.close();
+}
+
+// ── Override navigate to add sounds ──
+const _origNavigate=navigate;
+function navigate(section){
+  SND.nav();
+  _origNavigate(section);
+}
+// ── Override openModal/closeModal to add sounds ──
+const _origOpenModal=openModal;
+function openModal(t,b,f){SND.modal();_origOpenModal(t,b,f);}
+const _origCloseModal=closeModal;
+function closeModal(){SND.close();_origCloseModal();}
+// ── Override doLogin to add boot sound ──
+const _origDoLogin=doLogin;
+async function doLogin(){
+  SND.boot();
+  await _origDoLogin();
+}
+// ── Override doLogout ──
+const _origDoLogout=doLogout;
+async function doLogout(){
+  SND.logout();
+  await _origDoLogout();
+}
+// ── Add sound toggle to hub after build ──
+const _origBuildHub=buildHub;
+function buildHub(){
+  _origBuildHub();
+  buildSoundToggle();
+  // Start background chat listeners
+  setTimeout(()=>_startUnreadListeners(), 500);
+}
 
 </script>
 </body>
