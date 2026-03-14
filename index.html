@@ -978,6 +978,83 @@ async function getLogDays(){
   }catch(e){return [todayKey()];}
 }
 
+
+// ═══════════════════════════════════════════════════════════════
+//  SOUND ENGINE  (must be defined before doLogin)
+// ═══════════════════════════════════════════════════════════════
+// safe call — never throws even before SND is ready
+function snd(name){ try{ if(typeof SND!=='undefined'&&SND[name])SND[name](); }catch(e){} }
+
+const SND = (() => {
+  let ctx = null;
+  let enabled = true;
+  function getCtx(){
+    if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)();
+    if(ctx.state==='suspended') ctx.resume();
+    return ctx;
+  }
+  function tone(freq, type='sine', dur=0.08, vol=0.18, attack=0.005, decay=0.05){
+    if(!enabled) return;
+    try{
+      const c=getCtx(), g=c.createGain(), o=c.createOscillator();
+      o.type=type; o.frequency.setValueAtTime(freq,c.currentTime);
+      g.gain.setValueAtTime(0,c.currentTime);
+      g.gain.linearRampToValueAtTime(vol,c.currentTime+attack);
+      g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
+      o.connect(g); g.connect(c.destination);
+      o.start(c.currentTime); o.stop(c.currentTime+dur+0.01);
+    }catch(e){}
+  }
+  function chord(freqs, type, dur, vol){
+    freqs.forEach((f,i) => setTimeout(()=>tone(f,type,dur,vol),i*20));
+  }
+  return {
+    // Navigation click
+    nav:    ()=>{ tone(660,'square',0.05,0.1); setTimeout(()=>tone(880,'square',0.04,0.07),40); },
+    // Modal open
+    modal:  ()=>{ tone(440,'sine',0.06,0.12); setTimeout(()=>tone(554,'sine',0.08,0.1),50); },
+    // Modal close / cancel
+    close:  ()=>{ tone(554,'sine',0.05,0.1); setTimeout(()=>tone(440,'sine',0.06,0.08),40); },
+    // Success / confirm
+    ok:     ()=>{ chord([523,659,784],'sine',0.12,0.1); },
+    // Error / denied
+    err:    ()=>{ tone(200,'sawtooth',0.15,0.14); setTimeout(()=>tone(180,'sawtooth',0.12,0.1),80); },
+    // Login success (boot start)
+    boot:   ()=>{ [220,277,330,440].forEach((f,i)=>setTimeout(()=>tone(f,'square',0.1,0.12),i*80)); },
+    // Message received
+    msg:    ()=>{ tone(880,'sine',0.04,0.08); setTimeout(()=>tone(1100,'sine',0.05,0.06),60); },
+    // Mention / notification
+    mention:()=>{ chord([660,880],'sine',0.1,0.12); setTimeout(()=>chord([880,1100],'sine',0.08,0.1),100); },
+    // Logout
+    logout: ()=>{ [440,330,220].forEach((f,i)=>setTimeout(()=>tone(f,'square',0.08,0.1),i*70)); },
+    // Typing (very subtle)
+    type:   ()=>{ tone(1200,'sine',0.02,0.04); },
+    // Toggle sound
+    toggle: ()=>{ enabled=!enabled; return enabled; },
+    isOn:   ()=>enabled,
+  };
+})();
+
+// ── Sound toggle button in topbar ──
+function buildSoundToggle(){
+  const tr=document.querySelector('.topbar-right');
+  if(!tr||document.getElementById('snd-toggle'))return;
+  const btn=document.createElement('button');
+  btn.id='snd-toggle';
+  btn.style.cssText='background:transparent;border:1px solid var(--border);color:var(--txt-dim);font-family:"Share Tech Mono",monospace;font-size:10px;letter-spacing:2px;padding:4px 8px;cursor:pointer;transition:all .12s;';
+  btn.title='Ligar/desligar sons';
+  btn.textContent='♪ ON';
+  btn.onclick=()=>{
+    const on=snd('toggle');
+    btn.textContent=on?'♪ ON':'♪ OFF';
+    btn.style.opacity=on?'1':'0.4';
+    if(on)snd('ok'); 
+  };
+  tr.insertBefore(btn,tr.firstChild);
+}
+
+// ══════════════════════════════════════════════════════════════
+
 // ═══════════════════════════════════════════════════════════════
 //  LOGIN
 // ═══════════════════════════════════════════════════════════════
@@ -986,7 +1063,7 @@ async function doLogin(){
   const code = document.getElementById('inputCode').value.trim();
   const err  = document.getElementById('err-msg');
 
-  SND.boot();
+  snd('boot');
   setLoginLoading(true);
   try{
     const userDoc = await fbGet(db.collection('users').doc(id));
@@ -1015,7 +1092,7 @@ document.getElementById('inputCode').addEventListener('keydown',e=>{if(e.key==='
 document.getElementById('inputID').addEventListener('keydown',e=>{if(e.key==='Enter')document.getElementById('inputCode').focus();});
 
 async function doLogout(){
-  SND.logout();
+  snd('logout');
   if(currentUser) await addLog(currentUser.id,'Sessão encerrada','ok');
   if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
   currentUser=null; clearInterval(sessionInterval); clearInterval(bootClockInterval);
@@ -1161,7 +1238,7 @@ function buildNav(){
 }
 function navigate(section){
   if(!canAccess(section))return;
-  SND.nav();
+  snd('nav');
   if(_chatUnsub&&section!=='chat'){_chatUnsub();_chatUnsub=null;}
   currentSection=section;
   document.querySelectorAll('.nav-item').forEach(n=>n.classList.toggle('active',n.dataset.section===section));
@@ -1195,13 +1272,13 @@ function startSessionTimer(){
 //  MODAL
 // ═══════════════════════════════════════════════════════════════
 function openModal(title,body,footer=''){
-  SND.modal();
+  snd('modal');
   document.getElementById('modal-title').textContent=title;
   document.getElementById('modal-body').innerHTML=body;
   document.getElementById('modal-footer').innerHTML=footer;
   document.getElementById('modal-bg').classList.add('open');
 }
-function closeModal(){SND.close();document.getElementById('modal-bg').classList.remove('open');}
+function closeModal(){snd('close');document.getElementById('modal-bg').classList.remove('open');}
 document.getElementById('modal-bg').addEventListener('click',e=>{
   if(e.target===document.getElementById('modal-bg'))closeModal();
 });
@@ -2195,75 +2272,6 @@ async function deleteUser(uid){
 // ═══════════════════════════════════════════════════════════════
 //  SOUND ENGINE  (Web Audio API — no files needed)
 // ═══════════════════════════════════════════════════════════════
-const SND = (() => {
-  let ctx = null;
-  let enabled = true;
-  function getCtx(){
-    if(!ctx) ctx = new (window.AudioContext||window.webkitAudioContext)();
-    if(ctx.state==='suspended') ctx.resume();
-    return ctx;
-  }
-  function tone(freq, type='sine', dur=0.08, vol=0.18, attack=0.005, decay=0.05){
-    if(!enabled) return;
-    try{
-      const c=getCtx(), g=c.createGain(), o=c.createOscillator();
-      o.type=type; o.frequency.setValueAtTime(freq,c.currentTime);
-      g.gain.setValueAtTime(0,c.currentTime);
-      g.gain.linearRampToValueAtTime(vol,c.currentTime+attack);
-      g.gain.exponentialRampToValueAtTime(0.001,c.currentTime+dur);
-      o.connect(g); g.connect(c.destination);
-      o.start(c.currentTime); o.stop(c.currentTime+dur+0.01);
-    }catch(e){}
-  }
-  function chord(freqs, type, dur, vol){
-    freqs.forEach((f,i) => setTimeout(()=>tone(f,type,dur,vol),i*20));
-  }
-  return {
-    // Navigation click
-    nav:    ()=>{ tone(660,'square',0.05,0.1); setTimeout(()=>tone(880,'square',0.04,0.07),40); },
-    // Modal open
-    modal:  ()=>{ tone(440,'sine',0.06,0.12); setTimeout(()=>tone(554,'sine',0.08,0.1),50); },
-    // Modal close / cancel
-    close:  ()=>{ tone(554,'sine',0.05,0.1); setTimeout(()=>tone(440,'sine',0.06,0.08),40); },
-    // Success / confirm
-    ok:     ()=>{ chord([523,659,784],'sine',0.12,0.1); },
-    // Error / denied
-    err:    ()=>{ tone(200,'sawtooth',0.15,0.14); setTimeout(()=>tone(180,'sawtooth',0.12,0.1),80); },
-    // Login success (boot start)
-    boot:   ()=>{ [220,277,330,440].forEach((f,i)=>setTimeout(()=>tone(f,'square',0.1,0.12),i*80)); },
-    // Message received
-    msg:    ()=>{ tone(880,'sine',0.04,0.08); setTimeout(()=>tone(1100,'sine',0.05,0.06),60); },
-    // Mention / notification
-    mention:()=>{ chord([660,880],'sine',0.1,0.12); setTimeout(()=>chord([880,1100],'sine',0.08,0.1),100); },
-    // Logout
-    logout: ()=>{ [440,330,220].forEach((f,i)=>setTimeout(()=>tone(f,'square',0.08,0.1),i*70)); },
-    // Typing (very subtle)
-    type:   ()=>{ tone(1200,'sine',0.02,0.04); },
-    // Toggle sound
-    toggle: ()=>{ enabled=!enabled; return enabled; },
-    isOn:   ()=>enabled,
-  };
-})();
-
-// ── Sound toggle button in topbar ──
-function buildSoundToggle(){
-  const tr=document.querySelector('.topbar-right');
-  if(!tr||document.getElementById('snd-toggle'))return;
-  const btn=document.createElement('button');
-  btn.id='snd-toggle';
-  btn.style.cssText='background:transparent;border:1px solid var(--border);color:var(--txt-dim);font-family:"Share Tech Mono",monospace;font-size:10px;letter-spacing:2px;padding:4px 8px;cursor:pointer;transition:all .12s;';
-  btn.title='Ligar/desligar sons';
-  btn.textContent='♪ ON';
-  btn.onclick=()=>{
-    const on=SND.toggle();
-    btn.textContent=on?'♪ ON':'♪ OFF';
-    btn.style.opacity=on?'1':'0.4';
-    if(on)SND.ok(); 
-  };
-  tr.insertBefore(btn,tr.firstChild);
-}
-
-// ══════════════════════════════════════════════════════════════
 //  CHAT — FLOATING PANEL (replaces section-based render)
 // ══════════════════════════════════════════════════════════════
 let _chatPanelOpen = false;
@@ -2282,7 +2290,7 @@ function toggleChatPanel(){
   if(!panel)return;
   panel.classList.toggle('open',_chatPanelOpen);
   fab&&fab.classList.toggle('active',_chatPanelOpen);
-  SND.nav();
+  snd('nav');
   if(_chatPanelOpen){
     _initChatPanel();
     if(!_currentRoom) openChatRoom('global');
@@ -2395,7 +2403,7 @@ function _showNotif(senderId,text,room,type){
 function _dmRoomId(a,b){return 'dm_'+[a,b].sort().join('_');}
 
 function openChatRoom(roomId, otherUserId){
-  SND.nav();
+  snd('nav');
   if(_chatUnsub){_chatUnsub();_chatUnsub=null;}
   _currentRoom=roomId;
   _markSeen(roomId);
@@ -2512,7 +2520,7 @@ async function sendChatMsg(roomId){
   const text=input.value.trim(); if(!text)return;
   input.value='';
   document.getElementById('mention-dd')?.classList.remove('open');
-  SND.msg();
+  snd('msg');
   const msg={text,senderId:currentUser.id,senderName:currentUser.name,
     ts:firebase.firestore.FieldValue.serverTimestamp(),clientTs:Date.now()};
   await db.collection('chat').doc(roomId).collection('messages').add(msg);
@@ -2536,7 +2544,7 @@ function chatKeydown(e,roomId){
 async function deleteChatMsg(roomId,msgId){
   if(!confirm('Excluir mensagem?'))return;
   await db.collection('chat').doc(roomId).collection('messages').doc(msgId).delete();
-  SND.close();
+  snd('close');
 }
 
 // sounds integrated directly into functions below
