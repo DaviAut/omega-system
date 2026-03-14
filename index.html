@@ -607,88 +607,104 @@ html,body{width:100%;height:100%;background:var(--bg);overflow:hidden;
   </div>
 </div>
 
-<script type="module">
 
-// ═══════════════════════════════════════════════════════════════
-//  FIREBASE INIT
-// ═══════════════════════════════════════════════════════════════
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-  getFirestore, collection, doc, getDoc, getDocs, setDoc, addDoc,
-  updateDoc, deleteDoc, onSnapshot, query, orderBy, limit,
-  where, serverTimestamp, Timestamp
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+<!-- Firebase compat SDK (no ES module imports — works in all browsers) -->
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
+<script>
+// ═══════════════════════════════════════════════════════════════
+//  FIREBASE INIT  (compat SDK — no ES module imports needed)
+// ═══════════════════════════════════════════════════════════════
 const firebaseConfig = {
   apiKey: "AIzaSyAys_MB-KjPidHvPle5du50J5EsKsKFUUs",
   authDomain: "omega-project-c8cdb.firebaseapp.com",
   projectId: "omega-project-c8cdb",
   storageBucket: "omega-project-c8cdb.firebasestorage.app",
   messagingSenderId: "654706590337",
-  appId: "1:654706590337:web:bb459238f7808239550380",
-  measurementId: "G-790H0E77FJ"
+  appId: "1:654706590337:web:bb459238f7808239550380"
 };
-const app = initializeApp(firebaseConfig);
-const db  = getFirestore(app);
+firebase.initializeApp(firebaseConfig);
+const db = firebase.firestore();
 
-// ── Firestore helpers ──
-const COL = {
-  users:   ()=> collection(db,'users'),
-  entries: (sec)=> collection(db,'entries',sec,'docs'),
-  sheets:  (uid)=> doc(db,'sheets',uid),
-  logs:    (day)=> collection(db,'logs',day,'events'),
-  chat:    (room)=> collection(db,'chat',room,'messages'),
-};
-async function fbGet(ref){const s=await getDoc(ref);return s.exists()?{id:s.id,...s.data()}:null;}
-async function fbSet(ref,data){await setDoc(ref,data,{merge:true});}
-async function fbAdd(colRef,data){return await addDoc(colRef,data);}
-async function fbDel(ref){await deleteDoc(ref);}
-async function fbList(colRef,...constraints){
-  const q=query(colRef,...constraints);
-  const snap=await getDocs(q);
-  return snap.docs.map(d=>({id:d.id,...d.data()}));
+// ── Compat-SDK helpers (mirror the modular API used throughout) ──
+function colRef(path){
+  // path can be 'users' or 'entries/relatorios/docs' etc.
+  const parts = path.split('/');
+  let ref = db;
+  parts.forEach((p,i) => { ref = (i%2===0) ? ref.collection(p) : ref.doc(p); });
+  return ref;
+}
+function docRef(path){
+  const parts = path.split('/');
+  let ref = db;
+  parts.forEach((p,i) => { ref = (i%2===0) ? ref.collection(p) : ref.doc(p); });
+  return ref;
 }
 
-// ── Seed users on first run ──
-async function seedIfEmpty(){
-  const snap=await getDocs(COL.users());
-  if(!snap.empty)return;
-  const seed=[
-    {id:'ADMIN',    code:'omega@dm1n!', name:'Administrador ÔMEGA',  level:99, role:'ADMINISTRADOR DO SISTEMA',  team:'SCARLET', isAdmin:true},
-    {id:'RAIDER-01',code:'omega2077',   name:'Comandante SILVA',      level:5,  role:'COMANDANTE SUPREMO',        team:'SCARLET'},
-    {id:'ALPHA-07', code:'alpha007',    name:'Agente CROSS',          level:4,  role:'AGENTE SÊNIOR',             team:'SCARLET'},
-    {id:'BETA-12',  code:'beta1234',    name:'Operador RAMOS',        level:3,  role:'OPERADOR DE CAMPO',         team:'SCARLET'},
-    {id:'GAMA-03',  code:'gama999',     name:'Analista TORRES',       level:2,  role:'ANALISTA',                  team:'SCARLET'},
-    {id:'DELTA-99', code:'delta01',     name:'Recruta LIMA',          level:1,  role:'RECRUTA',                   team:'SCARLET'},
-    {id:'IVORY-01', code:'ivory2077',   name:'Agente WHITMORE',       level:3,  role:'OPERADOR DE CAMPO',         team:'IVORY'},
-  ];
-  for(const u of seed){
-    await setDoc(doc(db,'users',u.id),u);
-    if(!u.isAdmin) await fbSet(COL.sheets(u.id), mkSheet(u.id));
-  }
-  // seed entries
-  const seedEntries = {
-    arquivos:[
-      {id:'A001',title:'PROTOCOLO DE COMUNICAÇÃO INTERNA',level:1,author:'SYSTEM',date:'2077-03-01',tags:['protocolo'],content:'Diretrizes para comunicação interna entre agentes. Uso obrigatório de canais criptografados em operações de campo.'},
-      {id:'A002',title:'MANUAL DE CONDUTA DO AGENTE',level:1,author:'SYSTEM',date:'2077-02-15',tags:['manual'],content:'Código de conduta e ética operacional. Todo agente deve ler e assinar este documento antes de iniciar missões.'},
-    ],
-    relatorios:[
-      {id:'R001',title:'OP-CORVUS — CAPÍTULO 1',level:2,author:'SYSTEM',date:'2077-03-10',tags:['capitulo','finalizado'],content:'Resumo dos eventos da sessão: incursão ao complexo Nordvik. Equipe confirmou presença de três alvos. Missão concluída sem baixas.'},
-    ],
-    intel:[
-      {id:'I001',title:'ORGANIZAÇÃO: SERPENTE VERMELHA',level:3,author:'SYSTEM',date:'2077-01-20',tags:['organização','ativa'],content:'Grupo paramilitar transnacional. Opera em 7 países. Estimativa de 2.000 membros ativos. Estrutura hierárquica desconhecida.'},
-    ],
-    dossies:[
-      {id:'D001',title:'INIMIGO: VICTOR CRANE',level:3,author:'SYSTEM',date:'2077-01-05',tags:['ativo','alvo-primário'],content:'Comerciante de armas e intermediário da Serpente Vermelha. Localização atual: Europa Oriental. Nível de ameaça: EXTREMO.'},
-    ],
-    opsNegras:[
-      {id:'ON001',title:'MISSÃO: OPERAÇÃO ECLIPSE',level:4,author:'SYSTEM',date:'2077-03-05',tags:['ativa','prioridade-1'],content:'Objetivo: neutralizar célula terrorista no complexo Nordvik. 5 membros confirmados. Janela de execução: 72h. Requer silêncio total.'},
-    ],
-  };
-  for(const [sec,arr] of Object.entries(seedEntries)){
-    for(const e of arr) await setDoc(doc(db,'entries',sec,'docs',e.id),e);
-  }
-  console.log('[OMEGA] Seed completo.');
+// COL helpers — return Firestore collection references
+const COL = {
+  users:   ()=> db.collection('users'),
+  entries: (sec)=> db.collection('entries').doc(sec).collection('docs'),
+  sheets:  (uid)=> db.collection('sheets').doc(uid),
+  logs:    (day)=> db.collection('logs').doc(day).collection('events'),
+  chat:    (room)=> db.collection('chat').doc(room).collection('messages'),
+};
+
+// fbGet: get single doc → plain object or null
+async function fbGet(ref){
+  const snap = await ref.get();
+  return snap.exists ? {id:snap.id, ...snap.data()} : null;
+}
+// fbSet: merge-set a doc
+async function fbSet(ref, data){
+  await ref.set(data, {merge:true});
+}
+// fbAdd: add new doc to collection
+async function fbAdd(colRef, data){
+  return await colRef.add(data);
+}
+// fbDel: delete a doc
+async function fbDel(ref){
+  await ref.delete();
+}
+// fbList: get collection as array with optional query chain
+async function fbList(colRef, ...constraints){
+  let q = colRef;
+  constraints.forEach(c => { q = c(q); });
+  const snap = await q.get();
+  return snap.docs.map(d => ({id:d.id, ...d.data()}));
+}
+
+// Query constraint builders (mirror modular API)
+function orderBy(field, dir='asc'){ return q => q.orderBy(field, dir); }
+function limitQ(n){ return q => q.limit(n); }
+function whereQ(f,op,v){ return q => q.where(f,op,v); }
+
+// onSnapshot wrapper
+function fbOnSnapshot(ref, callback){
+  return ref.onSnapshot(snap => {
+    const docs = snap.docs.map(d=>({id:d.id,...d.data()}));
+    callback(docs);
+  });
+}
+
+// serverTimestamp
+async function _setDoc(ref, data, opts){
+  if(opts && opts.merge) await ref.set(data, {merge:true});
+  else await ref.set(data);
+}
+async function _updateDoc(ref, data){ await ref.update(data); }
+function _buildQuery(colRef, ...constraints){
+  let q = colRef;
+  constraints.forEach(c => { if(c) q = c(q); });
+  return q;
+}
+function serverTimestamp(){ return firebase.firestore.FieldValue.serverTimestamp(); }
+
+// Convenience: doc reference from collection path + id
+function docIn(colPath, id){
+  return colPath.doc(id);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -791,13 +807,14 @@ async function addLog(userId,action,type='ok'){
 }
 async function loadLogs(day){
   try{
-    return await fbList(COL.logs(day), orderBy('ts','desc'), limit(200));
+    return await fbList(COL.logs(day), orderBy('ts','desc'), limitQ(200));
   }catch(e){return [];}
 }
 async function getLogDays(){
   // list sub-collection IDs under /logs — requires list on the parent
   try{
-    const snap=await getDocs(collection(db,'logs'));
+    const snap=await db.collection('logs').get();
+    if(!snap)return[todayKey()];
     return snap.docs.map(d=>d.id).sort().reverse();
   }catch(e){return [todayKey()];}
 }
@@ -812,7 +829,7 @@ async function doLogin(){
 
   setLoginLoading(true);
   try{
-    const userDoc = await fbGet(doc(db,'users',id));
+    const userDoc = await fbGet(db.collection('users').doc(id));
     if(!userDoc || userDoc.code !== code){
       err.textContent='⚠  CREDENCIAIS INVÁLIDAS — ACESSO NEGADO';
       await addLog(id||'???','Tentativa de acesso negada','err');
@@ -1615,7 +1632,7 @@ async function renderEntries(area,section){
 }
 
 async function openViewEntry(section,id){
-  const e=await fbGet(doc(db,'entries',section,'docs',id)); if(!e)return;
+  const e=await fbGet(db.collection('entries').doc(section).collection('docs').doc(id)); if(!e)return;
   openModal(`${e.id} — ${e.title}`,`
     <div style="font-size:10px;letter-spacing:1px;color:var(--txt-dim);margin-bottom:12px">
       AUTOR: ${e.author||'—'} | DATA: ${e.date||'—'} | NÍVEL: ${e.level}</div>
@@ -1648,12 +1665,12 @@ async function submitCreateEntry(section){
   const entry={id,title:title.toUpperCase(),level,author,
     date:new Date().toISOString().split('T')[0],tags,content,
     createdAt:serverTimestamp()};
-  await setDoc(doc(db,'entries',section,'docs',id),entry);
+  await _setDoc(db.collection('entries').doc(section).collection('docs').doc(id),entry);
   await addLog(currentUser.id,`Criou entrada ${id} em ${section}`,'ok');
   closeModal(); renderEntries(document.getElementById('content-area'),section);
 }
 async function openEditEntry(section,id){
-  const e=await fbGet(doc(db,'entries',section,'docs',id)); if(!e)return;
+  const e=await fbGet(db.collection('entries').doc(section).collection('docs').doc(id)); if(!e)return;
   openModal(`EDITAR — ${e.id}`,`
     <div class="form-row"><label class="form-label">TÍTULO</label><input class="form-input" id="f-title" value="${e.title}"></div>
     <div class="form-row-2">
@@ -1670,13 +1687,13 @@ async function submitEditEntry(section,id){
   const level=parseInt(document.getElementById('f-level').value)||1;
   const content=document.getElementById('f-content').value.trim();
   const tags=document.getElementById('f-tags').value.split(',').map(t=>t.trim()).filter(Boolean);
-  await updateDoc(doc(db,'entries',section,'docs',id),{title,level,content,tags});
+  await _updateDoc(db.collection('entries').doc(section).collection('docs').doc(id),{title,level,content,tags});
   await addLog(currentUser.id,`Editou entrada ${id}`,'ok');
   closeModal(); renderEntries(document.getElementById('content-area'),section);
 }
 async function deleteEntry(section,id){
   if(!confirm(`Excluir ${id}?`))return;
-  await fbDel(doc(db,'entries',section,'docs',id));
+  await fbDel(db.collection('entries').doc(section).collection('docs').doc(id));
   await addLog(currentUser.id,`Excluiu ${id}`,'warn');
   renderEntries(document.getElementById('content-area'),section);
 }
@@ -1771,8 +1788,8 @@ function openChatRoom(roomId,otherUserId){
     <div class="chat-locked">⊘ APENAS AGENTES NÍV.5 E ADMIN PODEM ESCREVER NO CANAL GLOBAL</div>`}`;
 
   // real-time listener
-  const q=query(COL.chat(roomId),orderBy('ts','asc'),limit(100));
-  _chatUnsub=onSnapshot(q,snap=>{
+  const q=_buildQuery(COL.chat(roomId),orderBy('ts','asc'),limitQ(100));
+  _chatUnsub=q.onSnapshot(snap=>{
     const msgs=snap.docs.map(d=>({id:d.id,...d.data()}));
     renderChatMessages(msgs,roomId);
   });
@@ -1830,7 +1847,7 @@ function chatKeydown(e,roomId){
 
 async function deleteChatMsg(roomId,msgId){
   if(!confirm('Excluir mensagem?'))return;
-  await fbDel(doc(db,'chat',roomId,'messages',msgId));
+  await fbDel(db.collection('chat').doc(roomId).collection('messages').doc(msgId));
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1957,9 +1974,9 @@ async function submitCreateUser(){
   const level=parseInt(document.getElementById('u-level').value)||1;
   const team =document.getElementById('u-team').value||'SCARLET';
   if(!id||!code||!name||!role){alert('Preencha todos os campos.');return;}
-  const existing=await fbGet(doc(db,'users',id));
+  const existing=await fbGet(db.collection('users').doc(id));
   if(existing){alert('ID já existe.');return;}
-  await setDoc(doc(db,'users',id),{id,code,name,role,level,team});
+  await _setDoc(db.collection('users').doc(id),{id,code,name,role,level,team});
   await fbSet(COL.sheets(id),mkSheet(id));
   await addLog(currentUser.id,`Criou usuário ${id} [${team}]`,'ok');
   closeModal();
@@ -1997,7 +2014,7 @@ async function submitEditUser(uid){
   };
   const nc=document.getElementById('u-code').value.trim();
   if(nc)updates.code=nc;
-  await updateDoc(doc(db,'users',uid),updates);
+  await _updateDoc(db.collection('users').doc(uid),updates);
   await addLog(currentUser.id,`Editou usuário ${uid}`,'ok');
   closeModal();
   _allUsers=await fbList(COL.users());
@@ -2005,11 +2022,12 @@ async function submitEditUser(uid){
 }
 async function deleteUser(uid){
   if(!confirm(`Excluir usuário ${uid}?`))return;
-  await fbDel(doc(db,'users',uid));
+  await fbDel(db.collection('users').doc(uid));
   await addLog(currentUser.id,`Excluiu usuário ${uid}`,'warn');
   _allUsers=await fbList(COL.users());
   navigate('adminPanel');
 }
+
 
 </script>
 </body>
